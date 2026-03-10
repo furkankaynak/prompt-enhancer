@@ -48,19 +48,15 @@ pe/
 ├── commands/           # Command entry points (copy to .claude/commands/pe/)
 │   ├── enhance.md      # /pe:enhance — main enhancement command
 │   └── settings.md     # /pe:settings — project defaults management
-├── workflows/          # Stage instructions executed by the LLM
-│   ├── enhance-orchestrator.md   # Core orchestration flow
-│   ├── research.md               # Dual-source research (prompts.chat + web)
+├── workflows/          # Stage instructions — loaded by subagents on-demand
+│   ├── enhance-orchestrator.md   # Core orchestration + subagent dispatch
+│   ├── research.md               # Dual-source research (includes API reference)
 │   ├── generate.md               # Candidate generation (3 strategies + original)
-│   ├── score-critique.md         # Hybrid B scoring + critique
+│   ├── score-bundle.md           # Hybrid B scoring + rubric tables (merged)
 │   ├── synthesize.md             # Crossover/mutation for next round
-│   └── select-present.md         # Final portfolio selection + formatting
-├── references/         # Loaded on-demand during execution
-│   ├── data-contracts.md         # Schema shapes for internal artifacts
-│   ├── scoring-rubric.md         # Domain-adaptive rubric dimensions
-│   └── prompts-chat-api.md       # REST API reference for prompts.chat
-└── templates/
-    └── output-package.md         # Output format templates (full/diff/annotated)
+│   └── select-present.md         # Portfolio selection + output templates (merged)
+└── references/         # Shared reference — subagents Read on-demand
+    └── data-contracts.md         # Schema shapes for internal artifacts
 ```
 
 ## Key Concepts

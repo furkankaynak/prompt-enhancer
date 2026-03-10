@@ -2,7 +2,7 @@
 
 Assemble the final output package from the last round's scoreboard. Select the portfolio (winner + safe alt + exploratory alt) and format according to the requested output format.
 
-Reference: `@./pe/templates/output-package.md` for format templates.
+Output templates are included at the bottom of this file.
 
 ## Inputs
 - Final scoreboard (all candidates scored and ranked)
@@ -62,7 +62,7 @@ Always include the original prompt's scores for comparison.
 
 ## Step 4: Format Output
 
-Apply the template from `@./pe/templates/output-package.md` matching the requested format:
+Apply the template from the Output Templates section below matching the requested format:
 
 ### full (default)
 - Winner with full text and "Why This Won" rationale
@@ -99,3 +99,107 @@ Results are based on {what was available: internal generation only / partial res
 - Keep rationales concise — 1-3 sentences max
 - Scoring summary should be scannable at a glance
 - Run metadata goes last — it's informational, not the main event
+
+---
+
+## Output Templates
+
+### Template: full (default)
+
+```markdown
+---
+
+## Enhanced Prompt (Winner)
+
+{winner_prompt_text}
+
+### Why This Won
+{2-3 sentence rationale referencing score highlights and key improvements over alternatives}
+
+---
+
+## Alternative A (Safe)
+
+{alt_a_prompt_text}
+
+> {1-sentence rationale: why this is the conservative, low-risk choice}
+
+## Alternative B (Exploratory)
+
+{alt_b_prompt_text}
+
+> {1-sentence rationale: why this is the high-upside, creative choice}
+
+---
+
+## Change Log
+
+| Change | Rationale | Round |
+|--------|-----------|-------|
+| {description of change} | {why this improvement was made} | {which round} |
+
+## Scoring Summary
+
+| Candidate | Strategy | Eval | Rubric | Total | Rank |
+|-----------|----------|------|--------|-------|------|
+| Winner | {strategy} | {eval_score} | {rubric_score} | {total} | 1 |
+| Alt A | {strategy} | {eval_score} | {rubric_score} | {total} | {rank} |
+| Alt B | {strategy} | {eval_score} | {rubric_score} | {total} | {rank} |
+
+## Run Metadata
+- Rounds completed: {n} ({converged|completed|stopped})
+- Research: {enabled|disabled} {(sources used)}
+- Strictness: {low|balanced|high}
+- Domain detected: {coding|writing|data|general}
+{- Note: degraded mode — {reason} (only if applicable)}
+
+---
+```
+
+### Template: diff
+
+```markdown
+---
+
+## Changes from Original
+
+### Added
+- {list each new element added to the prompt}
+
+### Modified
+- {list each element that was reworded or restructured}
+
+### Removed
+- {list anything removed, if applicable, with reason}
+
+### Original
+{original_prompt_text}
+
+### Enhanced (Winner)
+{winner_prompt_text}
+
+---
+```
+
+### Template: annotated
+
+```markdown
+---
+
+## Enhanced Prompt (Annotated)
+
+{The winner prompt with inline annotations:}
+
+**[ADDED: {category}]** {new text that was added}
+**[MODIFIED: {what changed}]** {reworded text}
+**[ORIGINAL]** {unchanged text from the original}
+
+Example:
+**[ADDED: role context]** You are a senior TypeScript developer.
+**[ORIGINAL]** Write a function that sorts an array
+**[ADDED: specificity]** of objects by a configurable key,
+**[ADDED: constraint]** returning a new array without mutating the input.
+**[ADDED: edge cases]** Handle empty arrays and single-element arrays gracefully.
+
+---
+```

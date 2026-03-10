@@ -39,7 +39,6 @@ Copy these directories to `<project>/pe/`:
 ```
 pe/workflows/   →  <project>/pe/workflows/
 pe/references/  →  <project>/pe/references/
-pe/templates/   →  <project>/pe/templates/
 pe/README.md    →  <project>/pe/README.md
 ```
 
@@ -53,12 +52,11 @@ After installation, confirm the following exist in your project:
 
 - `.claude/commands/pe/enhance.md`
 - `.claude/commands/pe/settings.md`
-- `pe/workflows/` (contains orchestrator, research, generate, score-critique, synthesize, select-present)
-- `pe/references/` (contains data-contracts, prompts-chat-api, scoring-rubric)
-- `pe/templates/output-package.md`
+- `pe/workflows/` (contains orchestrator, research, generate, score-bundle, synthesize, select-present)
+- `pe/references/` (contains data-contracts)
 
 Then open Claude Code in the project and run `/pe:enhance` — the command should be available.
 
 ## How It Works
 
-The command files in `.claude/commands/pe/` reference `@./pe/workflows/...`, `@./pe/references/...`, and `@./pe/templates/...`. These paths resolve relative to the project root, which is why the `pe/` directory must sit at the project root.
+The command file in `.claude/commands/pe/enhance.md` references only `@./pe/workflows/enhance-orchestrator.md`. The orchestrator dispatches subagents that Read workflow files on-demand. All paths resolve relative to the project root, which is why the `pe/` directory must sit at the project root.

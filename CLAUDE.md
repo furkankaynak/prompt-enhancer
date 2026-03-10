@@ -9,21 +9,17 @@ PE (Prompt Enhancer) is a prompt-only, multi-round prompt optimization system. Z
 ```
 pe/
 ├── commands/                        # Entry points — copy to .claude/commands/pe/
-│   ├── enhance.md                   # /pe:enhance — main command, triggers orchestrator
+│   ├── enhance.md                   # /pe:enhance — loads orchestrator only + Agent tool
 │   └── settings.md                  # /pe:settings — per-project defaults (.pe/settings.json)
-├── workflows/                       # Stage instructions — this IS the "code"
-│   ├── enhance-orchestrator.md      # Master flow — sections 1-7, execute in order
-│   ├── research.md                  # Dual-source: prompts.chat API + web search
+├── workflows/                       # Stage instructions — loaded by subagents on-demand
+│   ├── enhance-orchestrator.md      # Master flow — sections 1-7, subagent dispatch
+│   ├── research.md                  # Dual-source research (includes API reference)
 │   ├── generate.md                  # 3 strategy variants + original anchor = 4 candidates
-│   ├── score-critique.md            # Hybrid B scoring + lock check + critique notes
+│   ├── score-bundle.md              # Scoring + rubric tables (merged)
 │   ├── synthesize.md                # Crossover + mutation from survivors
-│   └── select-present.md           # Portfolio selection + output formatting
-├── references/                      # On-demand — load ONLY when actively needed
-│   ├── data-contracts.md            # Schema shapes for internal artifacts
-│   ├── scoring-rubric.md            # Domain-adaptive eval scenarios + rubric dimensions
-│   └── prompts-chat-api.md          # prompts.chat REST endpoints
-├── templates/
-│   └── output-package.md            # Output format templates (full/diff/annotated)
+│   └── select-present.md           # Portfolio selection + output templates (merged)
+├── references/                      # On-demand — subagents Read when needed
+│   └── data-contracts.md            # Full schema shapes for internal artifacts
 ├── .docs/                           # Product docs (PRD.md, PRODUCT-DESIGN.md)
 ├── README.md                        # User-facing overview and quick start
 └── install.sh                       # POSIX installer
@@ -73,10 +69,12 @@ pe/
 
 ## How Execution Works
 
-- **Entry**: `/pe:enhance "prompt"` → `commands/enhance.md` loads all workflows and references via `@` file references
-- **Orchestrator is master**: `workflows/enhance-orchestrator.md` controls the entire flow — sections 1 through 7, executed in order
-- **On-demand loading**: Reference files (`scoring-rubric.md`, `data-contracts.md`, `prompts-chat-api.md`) are accessed only when their stage runs — not preloaded into context
-- **Context compaction**: Between rounds, carry forward ONLY the `RoundContext` (survivors + tombstones + original prompt + lock contract). Drop raw research, full critique history, and eliminated candidate texts
+- **Entry**: `/pe:enhance "prompt"` → `commands/enhance.md` loads only the orchestrator via `@` reference
+- **Orchestrator is master**: `workflows/enhance-orchestrator.md` controls the entire flow — sections 1-4 run inline, sections 5-7 dispatch subagents
+- **Subagent dispatch**: Compute-heavy stages (research, generate, score, synthesize, select) run as Agent tool calls. Each subagent Reads only its needed workflow file + data-contracts.md. Main thread stays lean (~4,500 tokens).
+- **Model selection**: Generate/Synthesize use haiku (lightweight). Research/Score/Select use sonnet (analytical depth).
+- **Fallback**: If Agent tool unavailable, orchestrator Reads workflow files and executes inline (preserves monolithic behavior)
+- **Context compaction**: Between rounds, carry forward ONLY the `RoundContext` (survivors + tombstones + original prompt + lock contract)
 - **Convergence**: At round >= 2, if top score improves < 1% over previous round, stop early
 - **Degraded mode**: If prompts.chat or web search fails, note it and continue — research is supplemental, never blocking
 
@@ -95,7 +93,7 @@ Full schemas in `references/data-contracts.md`. Essentials:
 
 **Survivor policy**: Top 4 by score. Original (`c-original`) always survives. Lock violators excluded.
 
-**Domains**: `coding`, `writing`, `data`, `general` — each has its own eval scenarios and rubric dimensions in `scoring-rubric.md`.
+**Domains**: `coding`, `writing`, `data`, `general` — each has its own eval scenarios and rubric dimensions in `score-bundle.md`.
 
 ## Do
 
@@ -118,4 +116,5 @@ Full schemas in `references/data-contracts.md`. Essentials:
 - Don't exceed 3 optimization rounds
 - Don't present lock-violating candidates in the final portfolio
 - Don't modify workflow files during execution — they are the source of truth
-- Don't preload reference files into context — access them on-demand when their stage runs
+- Don't preload reference files into context — subagents load them on-demand
+- Don't bypass subagent dispatch unless Agent tool is genuinely unavailable
