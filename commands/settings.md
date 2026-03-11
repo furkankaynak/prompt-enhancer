@@ -1,7 +1,7 @@
 ---
 name: pe:settings
 description: View and update default settings for prompt enhancement runs. Settings persist per-project in .pe/settings.json.
-argument-hint: "[view|set|reset] [--strictness=low|balanced|high] [--research=true|false] [--rounds=1-3] [--output=full|diff|annotated]"
+argument-hint: "[view|set|reset|reset-history] [--strictness=low|balanced|high] [--research=true|false] [--rounds=1-3] [--output=full|diff|annotated] [--auto=true|false]"
 allowed-tools:
   - Read
   - Write
@@ -18,15 +18,17 @@ Precedence: command flags > project settings > schema defaults.
 Arguments: $ARGUMENTS
 
 Subcommands:
-- view (default if no args): Display current effective settings
+- view (default if no args): Display current effective settings (includes learning stats)
 - set: Update one or more settings
 - reset: Reset all settings to schema defaults (deletes .pe/settings.json)
+- reset-history: Clear cross-run learning history (deletes .pe/history.json)
 
 Schema defaults:
 - research_mode: true
 - strictness: "balanced"
 - max_rounds: 3
 - output_format: "full"
+- auto_mode: false
 </context>
 
 <process>
@@ -44,6 +46,7 @@ Schema defaults:
      - research must be true|false
      - rounds must be integer 1-3
      - output must be full|diff|annotated
+     - auto must be true|false
    - Read existing .pe/settings.json (or start from empty)
    - Merge new values
    - Write updated .pe/settings.json
@@ -54,8 +57,21 @@ Schema defaults:
    - If confirmed, delete .pe/settings.json
    - Display schema defaults
 
+5. For "reset-history":
+   - Ask user to confirm: "Clear all learning history? This removes strategy preferences built from your past runs."
+   - If confirmed, delete .pe/history.json
+   - Display: "Learning history cleared. Preferences will rebuild as you use /pe:enhance."
+
+For "view", also display learning stats if `.pe/history.json` exists:
+   - Total runs
+   - Preferred strategies (top 3)
+   - Average score lift
+   - Typical domain
+
 Example usage:
-- /pe:settings -> show current settings
+- /pe:settings -> show current settings + learning stats
 - /pe:settings set --strictness=high --rounds=2
+- /pe:settings set --auto=true
 - /pe:settings reset
+- /pe:settings reset-history
 </process>

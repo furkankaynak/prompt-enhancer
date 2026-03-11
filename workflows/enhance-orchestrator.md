@@ -5,7 +5,7 @@ This is the core workflow for `/pe:enhance`. Execute every section in order. Do 
 ## Overview
 
 ```
-Parse → Confidence Check → [Clarify] → Alignment Gate → [Research] → Optimization Loop → Present
+Parse → Confidence Check → [Clarify] → Alignment Gate → [Research] → Optimization Loop → Present → [Learn]
 ```
 
 ---
@@ -55,11 +55,17 @@ Extract from `$ARGUMENTS`:
 3. **--strictness=<level>**: One of `low`, `balanced`, `high`. Default: `balanced`.
 4. **--rounds=<n>**: Integer 1-3. Default: `3`.
 5. **--output=<format>**: One of `full`, `diff`, `annotated`. Default: `full`.
+6. **--auto**: If present, set `auto_mode=true`. Skips clarification (unless confidence < 0.3) and alignment gate.
+7. **--quick**: Convenience alias. If present, set: `auto_mode=true`, `research_mode=false`, `max_rounds=1`, `output_format=diff`. Explicit flags override quick defaults.
 
 If the prompt is empty or missing, ask the user:
 > "What prompt would you like me to enhance?"
 
 Wait for response, then continue.
+
+**Load project settings**: Read `.pe/settings.json` if it exists. Project settings fill in any flag not explicitly provided. Command flags > project settings > schema defaults.
+
+**Load learning preferences**: Read `.pe/history.json` if it exists. Extract `preferences` for use in Section 6 (generation bias).
 
 Record the parsed envelope mentally:
 - `prompt`: the user's prompt text
@@ -67,6 +73,8 @@ Record the parsed envelope mentally:
 - `strictness`: low/balanced/high
 - `output_format`: full/diff/annotated
 - `max_rounds`: 1-3
+- `auto_mode`: true/false
+- `learning_preferences`: preferences object from history.json (or null if no history)
 
 ---
 
@@ -95,7 +103,13 @@ Decision:
 
 ---
 
-## Section 3: Clarification (Conditional — only if confidence < 0.6)
+## Section 3: Clarification (Conditional)
+
+**Skip conditions**:
+- If `auto_mode=true` AND confidence >= 0.3: skip entirely, proceed to Section 4
+- If `auto_mode=true` AND confidence < 0.3: ask ONE question (extremely vague prompt override)
+- If `auto_mode=false` AND confidence >= 0.6: skip entirely, proceed to Section 4
+- If `auto_mode=false` AND confidence < 0.6: ask ONE question
 
 **Single-question ceiling**: Ask exactly ONE targeted clarification question. Never ask more than one.
 
@@ -117,9 +131,7 @@ After receiving the answer, incorporate it into the working prompt context. Then
 
 ---
 
-## Section 4: Alignment Gate (Always runs — User approval required)
-
-Present the enhancement plan to the user for approval before optimization begins.
+## Section 4: Alignment Gate
 
 ### Build the Lock Contract
 
@@ -129,7 +141,19 @@ From the prompt (and any clarification answer), extract:
 - **Forbidden changes**: Things the user explicitly or implicitly requires that must not be dropped
 - **Success criteria**: How to judge if the enhanced prompt is successful
 
-### Present the Plan
+### Auto Mode Path (auto_mode=true)
+
+Auto-build the lock contract from the prompt without user interaction. Display a brief confirmation:
+
+```
+Auto mode: enhancing prompt as "{domain}" domain. Starting optimization...
+```
+
+Proceed directly to Section 5. No approval needed.
+
+### Normal Mode Path (auto_mode=false)
+
+Present the enhancement plan to the user for approval before optimization begins.
 
 Display to the user:
 
@@ -137,7 +161,8 @@ Display to the user:
 ## Enhancement Plan
 
 **Intent**: {goal — one sentence}
-**Domain**: {coding|writing|data|general}
+**Domain**: {coding|writing|data|general} ← if this is wrong, say so and I'll re-classify
+
 **Must-haves**: {bulleted list of constraints}
 
 **Enhancement strategies**:
@@ -151,15 +176,16 @@ Display to the user:
 - Max rounds: {n}
 - Output format: {full|diff|annotated}
 
-Proceed with enhancement? (You can adjust any setting or add constraints)
+Proceed with enhancement? (You can adjust any setting, change the domain, or add constraints)
 ```
 
 Use `AskUserQuestion` with options:
 - "Proceed" (recommended)
 - "Adjust settings"
+- "Change domain"
 - "Add constraints"
 
-If the user adjusts settings or adds constraints, update the lock contract and settings accordingly, then re-present the plan. If they approve, proceed to Section 5.
+If the user changes the domain, re-classify and update eval scenarios/rubric dimensions accordingly. If they adjust settings or add constraints, update the lock contract and settings accordingly, then re-present the plan. If they approve, proceed to Section 5.
 
 ---
 
@@ -168,29 +194,15 @@ If the user adjusts settings or adds constraints, update the lock contract and s
 Brief status update to user:
 > "Researching prompt patterns and domain best practices..."
 
-**Dispatch via Agent tool** (model: sonnet):
+**Dispatch A** — Use `pe-researcher` subagent:
+- Inputs: prompt={prompt}, domain={domain}
+- Returns: JSON with promptsChatResults, webResults, degradedSources
 
-```
-Task: Execute the research workflow for prompt enhancement.
+**Dispatch B** — Use `pe-research-synth` subagent:
+- Inputs: gathered_data={output from A}, prompt={prompt}, domain={domain}
+- Returns: 500-word research brief
 
-Read the instructions at: ./pe/workflows/research.md
-
-Inputs:
-- User prompt: "{prompt}"
-- Detected domain: "{domain}"
-
-Execute the full research workflow (prompts.chat API search + web research).
-Return a compact research brief (max 500 words) with sections:
-- Sources Used
-- Structural Patterns Observed
-- Domain Conventions
-- Constraints and Quality Standards
-- Seed Inspiration
-
-If any source fails, note degraded mode and continue with available data.
-```
-
-**Fallback**: If Agent tool is unavailable or fails, Read `./pe/workflows/research.md` and execute inline.
+**Fallback**: If named subagent is unavailable, use generic Agent tool with the inputs above and instruct it to Read `./pe/workflows/research.md`. If Agent tool is also unavailable, Read `./pe/workflows/research.md` and execute inline.
 
 If `research_mode=false`, skip this section entirely and note:
 > "Research skipped by user request."
@@ -203,118 +215,41 @@ Execute up to `max_rounds` rounds of generate → score/critique → synthesize.
 
 ### Round 0: Initial Generation
 
-**Dispatch Generate via Agent tool** (model: haiku):
-
-```
-Task: Generate initial prompt candidates for optimization.
-
-Read the instructions at: ./pe/workflows/generate.md
-For full schema details, Read: ./pe/references/data-contracts.md
-
-Inputs:
-- Original prompt: "{prompt}"
-- Domain: "{domain}"
-- Strictness: "{strictness}"
-- Research brief: "{research_brief or 'none'}"
-- Round: 0
-
-Generate exactly 4 candidates:
-- c1: faithful rewrite
-- c2: structural rework
-- c3: creative restructuring
-- c-original: original prompt verbatim (isOriginal: true)
-
-Return each candidate as:
-id: "{id}"
-text: "{full prompt text}"
-strategyLabel: "{strategy}"
-isOriginal: {true|false}
-```
+**Dispatch Generate** — Use `pe-generator` subagent:
+- Inputs: prompt={prompt}, domain={domain}, strictness={strictness}, research_brief={research_brief or "none"}, round=0, learning_preferences={learning_preferences or "none"}
+- Returns: 4 candidates (c1, c2, c3, c-original)
 
 Brief status update:
 > "Generated 4 initial candidates. Scoring..."
 
-**Dispatch Score/Critique via Agent tool** (model: sonnet):
+**Dispatch Score/Critique** — Use `pe-scorer` subagent:
+- Inputs: candidates={candidates}, prompt={prompt}, domain={domain}, lock_contract={lock_contract}, round=0
+- Returns: scoreboard, survivors, tombstones, critique notes, converged=false
 
-```
-Task: Score and critique prompt candidates using Hybrid B scoring.
-
-Read the instructions at: ./pe/workflows/score-bundle.md
-For full schema details, Read: ./pe/references/data-contracts.md
-
-Inputs:
-- Candidates: {serialized candidate array}
-- Original prompt: "{prompt}"
-- Domain: "{domain}"
-- Lock contract: {serialized lock contract}
-- Round: 0
-
-Execute full scoring pipeline:
-1. Generate eval scenarios for this domain
-2. Score each candidate (evalSetScore + rubricScore → totalScore)
-3. Rank candidates
-4. Intent lock check against lock contract
-5. Select top 4 survivors (c-original always survives)
-6. Critique top 2-3 non-original survivors
-
-Return:
-- Scoreboard table (Rank | ID | Strategy | Eval | Rubric | Total)
-- Survivors list (candidateId, text, totalScore, rationale)
-- Tombstones list (candidateId, reason)
-- Critique notes per top survivor
-- convergence_delta: N/A (round 0)
-- converged: false
-```
-
-Record the initial scoreboard and critique notes.
+Record the initial scoreboard and critique notes. Display all scores to 2 decimal places (not 3).
 
 ### Rounds 1 to max_rounds: Optimization
 
 For each round:
 
-**1. Dispatch Synthesize via Agent tool** (model: haiku):
+**1. Dispatch Synthesize** — Use `pe-synthesizer` subagent:
+- Inputs: survivors={survivors with scores and critique}, tombstones={tombstones}, prompt={prompt}, round={round_number}, strictness={strictness}, lock_contract={lock_contract}
+- Returns: crossover + mutations + original anchor
 
-```
-Task: Synthesize new prompt candidates from survivors.
-
-Read the instructions at: ./pe/workflows/synthesize.md
-For full schema details, Read: ./pe/references/data-contracts.md
-
-Inputs:
-- Survivors: {serialized survivors with scores and critique notes}
-- Tombstones: {serialized tombstones}
-- Original prompt: "{prompt}"
-- Round: {round_number}
-- Strictness: "{strictness}"
-- Lock contract: {serialized lock contract}
-
-Produce:
-- 1 crossover candidate from top 2 survivors
-- 1 mutation per non-original survivor
-- 1 original anchor (re-injected verbatim)
-
-Return each candidate as:
-id: "{id}"
-text: "{full prompt text}"
-strategyLabel: "{strategy}"
-isOriginal: {true|false}
-```
-
-**2. Dispatch Score/Critique via Agent tool** (model: sonnet):
-
-Same format as Round 0 scoring, but with:
-- New candidates from synthesis
-- Current round number
-- Previous round's top score (for convergence calculation)
+**2. Dispatch Score/Critique** — Use `pe-scorer` subagent:
+- Inputs: candidates={new candidates}, prompt={prompt}, domain={domain}, lock_contract={lock_contract}, round={round_number}, previous_top_score={previous top score}
+- Returns: scoreboard, survivors, tombstones, critique notes, convergence_delta, converged
 
 **3. Convergence check** (round >= 2 only):
-- If improvement < 0.01 (1%): stop early with reason "score plateau"
+- If converged (improvement < 0.01): stop early with reason "score plateau"
 - Report convergence to user
 
 **4. Status update**:
 > "Round {n}/{max_rounds} complete. Top score: {score}. {survivors_count} candidates advancing."
 
 **5.** If converged, break out of the loop.
+
+**Fallback**: If named subagents are unavailable, use generic Agent tool with compact inline prompts instructing each to Read its workflow file. If Agent tool is also unavailable, Read workflow files and execute inline.
 
 ### After Loop Completes
 
@@ -328,42 +263,34 @@ Record:
 
 ## Section 7: Final Output
 
-**Dispatch Select/Present via Agent tool** (model: sonnet):
-
-```
-Task: Select the final portfolio and format the output package.
-
-Read the instructions at: ./pe/workflows/select-present.md
-For full schema details, Read: ./pe/references/data-contracts.md
-
-Inputs:
-- Final scoreboard: {serialized scoreboard}
-- All survivors with full text: {serialized survivors}
-- Lock contract: {serialized lock contract}
-- Change log entries: {accumulated changes across rounds}
-- Output format: "{output_format}"
-- Original prompt: "{prompt}"
-- Run metadata:
-  - Rounds completed: {n}
-  - Convergence: {yes/no, reason}
-  - Research: {enabled/disabled, sources status}
-  - Strictness: {level}
-  - Domain: {domain}
-
-Execute full selection and presentation:
-1. Select winner (highest scoring, not original)
-2. Select Alt A (safe — closest to original)
-3. Select Alt B (exploratory — most different strategy)
-4. Build change log
-5. Build scoring summary
-6. Format using the "{output_format}" template
-
-Return the complete formatted output package ready to display to the user.
-```
+**Dispatch Select/Present** — Use `pe-presenter` subagent:
+- Inputs: scoreboard={final scoreboard}, survivors={all survivors with full text}, lock_contract={lock_contract}, change_log={accumulated changes}, output_format={output_format}, prompt={prompt}, run_metadata={rounds, convergence, research status, strictness, domain}
+- Returns: complete formatted output package
 
 Display the returned output package to the user verbatim.
 
-**Fallback**: If Agent tool is unavailable, Read `./pe/workflows/select-present.md` and execute inline.
+**Fallback**: If named subagent is unavailable, use generic Agent tool. If Agent tool is unavailable, Read `./pe/workflows/select-present.md` and execute inline.
+
+---
+
+## Section 8: Learning Capture (Always runs after output)
+
+After presenting the portfolio, ask the user which version they will use:
+
+Use `AskUserQuestion` with options:
+- "Winner"
+- "Alt A (Safe)"
+- "Alt B (Exploratory)"
+- "Original (no enhancement needed)"
+- "Skip (deciding later)"
+
+**Dispatch Learning** — Use `pe-learner` subagent:
+- Inputs: domain={domain}, originalPrompt={first 200 chars}, winnerStrategy={strategy}, userPick={winner|altA|altB|original|none}, strictness={strictness}, rounds={rounds_completed}, topScore={top_score}, originalScore={original_score}, auto_mode={auto_mode}, history_path=.pe/history.json
+- Writes: .pe/history.json
+
+**Fallback**: If named subagent is unavailable, use generic Agent tool. If Agent tool is unavailable, Read `./pe/workflows/learning.md` and execute inline.
+
+If the user picks "Skip", still record the run with `userPick: "none"`.
 
 ---
 
@@ -375,6 +302,7 @@ Display the returned output package to the user verbatim.
 | All candidates fail lock check in a round | Stop optimization, present best compliant candidate from previous round |
 | Research fails | Continue in degraded mode with note |
 | WebFetch/WebSearch unavailable | Skip research, note degraded mode |
+| Named subagent unavailable | Fall back to generic Agent tool with compact inline prompt |
 | Agent tool unavailable | Read workflow file directly and execute inline (fallback mode) |
 | Only 1 candidate survives all rounds | Present single enhanced prompt + original for comparison |
 | Original prompt scores highest | Still present enhanced alternatives, note that original was strong |

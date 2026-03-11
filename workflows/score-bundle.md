@@ -24,7 +24,7 @@ For each rubric dimension (weighted, domain-specific): evaluate prompt text qual
 ```
 totalScore = 0.5 * evalSetScore + 0.5 * rubricScore
 ```
-Round all scores to 3 decimal places.
+Round all scores to 2 decimal places.
 
 ## Step 3: Rank Candidates
 

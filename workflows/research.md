@@ -13,33 +13,42 @@ This stage runs only when `research_mode=true` (default). It produces a compact 
 ### Step 1: Build Search Queries
 
 From the user prompt, extract:
-1. The core intent (what the user wants to accomplish)
-2. The domain (coding, writing, data, general)
-3. Key technical terms or subject keywords
+- `{topic}`: the main subject/technology (e.g., "react", "blog", "sql")
+- `{purpose}`: what the prompt does / the output type (e.g., "game", "post", "query")
+- `{type}`: the task category (e.g., "coding", "writing", "data")
 
-Build two queries:
-- **prompts.chat query**: Focus on the task type and domain. Example: for "build a React tower defense game", query = "react game development prompt"
-- **Web query**: Focus on best practices and conventions. Example: "react tower defense game architecture best practices"
+**Build 3 prompts.chat queries (max 2 words each):**
+- Q1: `{topic} {purpose}` — e.g., "react game"
+- Q2: `{topic} {type}` — e.g., "react coding"
+- Q3: `{purpose} {type}` — e.g., "game dev"
+
+**Build 1 web query (prompt-engineering focused):**
+- Format: `"{topic} {purpose} prompt patterns"` or `"{domain} prompt engineering {purpose}"`
+- Focus on prompt engineering patterns, not general architecture or best practices
+- Example: "react game prompt patterns" — not "react tower defense game architecture best practices"
 
 ### Step 2: prompts.chat Retrieval
 
-Use WebFetch to search prompts.chat:
+For each of the 3 queries (Q1, Q2, Q3):
 
 ```
-URL: https://prompts.chat/api/prompts?q={url_encoded_query}&perPage=5
-Prompt: "Extract the id and title for each result. Return as a numbered list with id and title."
+URL: https://prompts.chat/api/prompts?q={url_encoded_query}&perPage=3
+Extract: id and title for each result
 ```
 
-From the search results, select the top 2-3 most relevant results (filter by title alignment with user intent).
+Deduplicate results by id across all 3 queries. Filter: keep only results whose title aligns with the user's intent. Select top 2-3 unique relevant results for detail fetch.
 
 For each selected result, fetch the full content:
 
 ```
 URL: https://prompts.chat/api/prompts/{id}
-Prompt: "Extract the full prompt content. Identify and list: (1) structural patterns used (sections, headers, numbering), (2) constraints or rules specified, (3) role/persona setup if any, (4) output format specifications."
+Extract: structural patterns, constraints, role setup, output format
 ```
 
-**If prompts.chat fails** (HTTP error, empty results, irrelevant results):
+**On failure of any individual query**: skip it, continue with results from the other queries.
+**On all queries failing**: record `[prompts.chat: unavailable]` and continue.
+
+**If prompts.chat fails entirely** (HTTP error, empty results across all queries):
 - Record: `[prompts.chat: unavailable — {reason}]`
 - Continue to web research
 - Do NOT retry or block
@@ -60,6 +69,8 @@ From the search results, extract:
 - Do NOT retry or block
 
 ### Step 4: Produce Research Brief
+
+> **Note**: This synthesis step runs on a higher-capability model. Steps 1-3 are lightweight retrieval.
 
 Synthesize findings into a compact research brief (max 500 words):
 
@@ -104,12 +115,12 @@ Synthesize findings into a compact research brief (max 500 words):
 
 ## API Reference: prompts.chat
 
-**Search**: `GET https://prompts.chat/api/prompts?q={query}&perPage=5` — no auth required. Returns array of `{id, title, content}`.
+**Search**: `GET https://prompts.chat/api/prompts?q={query}&perPage=3` — no auth required. Returns array of `{id, title, content}`. Use max 2-word queries for best results.
 
 **Get by ID**: `GET https://prompts.chat/api/prompts/{id}` — returns single prompt with full `content`.
 
 **WebFetch usage**:
-- Search: URL = `https://prompts.chat/api/prompts?q={encoded_query}&perPage=5`, extract id + title per result
+- Search: URL = `https://prompts.chat/api/prompts?q={encoded_query}&perPage=3`, extract id + title per result (run 3 separate queries, deduplicate by id)
 - Detail: URL = `https://prompts.chat/api/prompts/{id}`, extract structural patterns, constraints, sectioning, tone/role setup
 
 **Rules**: Use as inspiration only (never copy verbatim). Filter for relevance before extracting. On failure, continue in degraded mode. Keep extracted patterns compact.

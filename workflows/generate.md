@@ -8,6 +8,7 @@ Generate prompt candidate variants for the optimization pool.
 - Strictness level (low/balanced/high)
 - Research brief (if available)
 - Round number (0 = initial generation)
+- Learning preferences (if available) — preferred_strategies map from cross-run history
 
 ## Round 0: Initial Baseline Generation
 
@@ -52,6 +53,20 @@ text: "{full prompt text}"
 strategyLabel: "{strategy}"
 isOriginal: {true|false}
 ```
+
+## Learning-Biased Generation
+
+If `learning_preferences` is provided with `preferred_strategies` data, adjust the slot allocation:
+
+1. Identify the dominant strategy: the one with the highest pick count
+2. If dominant strategy has **3x+ picks** over the next most-picked: generate **2 candidates** using that strategy (with different angles), and **drop the least-picked** strategy slot
+3. Keep total at exactly 4 candidates (3 generated + 1 original anchor)
+4. If no clear dominant (less than 3x), use default allocation
+
+Example: `preferred_strategies: {structural_rework: 5, faithful_rewrite: 1, creative: 1}`
+→ Generate: 2 structural rework variants, 1 faithful rewrite, 1 original (creative dropped)
+
+If no learning preferences or empty history: use default allocation.
 
 ## Quality Standards
 
