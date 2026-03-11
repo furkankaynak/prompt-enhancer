@@ -13,6 +13,7 @@ The normalized run request after parsing command arguments.
 | strictness | "low" \| "balanced" \| "high" | "balanced" | How aggressively to rewrite |
 | output_format | "full" \| "diff" \| "annotated" | "full" | Output presentation format |
 | max_rounds | integer 1-3 | 3 | Maximum optimization rounds |
+| auto_mode | boolean | false | Skip clarification + alignment gate |
 | run_id | string | auto-generated | Format: `run_{timestamp}_{random}` |
 | created_at | ISO string | auto-generated | Run start timestamp |
 
@@ -109,3 +110,33 @@ Compact carry-forward between rounds. This IS the compaction discipline — only
 | tombstones | Tombstone[] | All eliminated candidates so far |
 | originalPrompt | string | Re-injected each round |
 | lockContract | LockContract | Re-injected each round |
+
+## RunHistoryEntry
+
+A single run record for cross-run learning. Stored in `.pe/history.json`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Format: `run_{timestamp}` |
+| timestamp | ISO string | When the run completed |
+| domain | string | Detected domain |
+| originalPrompt | string (max 200 chars) | Truncated original prompt |
+| winnerStrategy | string | Strategy label of the winner candidate |
+| userPick | "winner" \| "altA" \| "altB" \| "original" \| "none" | Which portfolio option the user chose |
+| strictness | string | Strictness level used |
+| rounds | integer | Rounds completed |
+| topScore | number 0-1 | Highest score in final round |
+| originalScore | number 0-1 | Original prompt's score in final round |
+| autoMode | boolean | Whether --auto was used |
+
+## LearningPreferences
+
+Aggregate preferences computed from run history. Updated after each run.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| preferred_strategies | object | Map of strategy name → pick count |
+| avg_score_lift | number | Average (topScore - originalScore) across runs with a pick |
+| typical_domain | string | Most frequent domain |
+| typical_strictness | string | Most frequent strictness |
+| runs_total | integer | Total runs recorded |

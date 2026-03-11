@@ -17,12 +17,18 @@ echo "Installing PE into: $TARGET"
 
 # Create target directories
 mkdir -p "$TARGET/.claude/commands/pe"
+mkdir -p "$TARGET/.claude/agents"
 mkdir -p "$TARGET/pe/workflows"
 mkdir -p "$TARGET/pe/references"
 
 # Copy command files → .claude/commands/pe/
 for f in "$SCRIPT_DIR/commands/"*.md; do
   [ -f "$f" ] && cp "$f" "$TARGET/.claude/commands/pe/"
+done
+
+# Copy agent files → .claude/agents/
+for f in "$SCRIPT_DIR/agents/"*.md; do
+  [ -f "$f" ] && cp "$f" "$TARGET/.claude/agents/"
 done
 
 # Copy workflows, references, templates → pe/
@@ -42,6 +48,7 @@ echo "PE installed successfully!"
 echo ""
 echo "Installed structure:"
 echo "  $TARGET/.claude/commands/pe/  (slash commands)"
+echo "  $TARGET/.claude/agents/       (named subagents)"
 echo "  $TARGET/pe/                   (workflows, references)"
 echo ""
 echo "Usage: In Claude Code, run /pe:enhance or /pe:settings"
