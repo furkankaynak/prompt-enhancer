@@ -99,3 +99,17 @@ Synthesize findings into a compact research brief (max 500 words):
 - Keep the brief under 500 words — this feeds into the context for generation
 - If both sources fail, produce a minimal brief noting degraded mode and continue
 - Research findings are supplemental — internal generation is always the primary source
+
+---
+
+## API Reference: prompts.chat
+
+**Search**: `GET https://prompts.chat/api/prompts?q={query}&perPage=5` — no auth required. Returns array of `{id, title, content}`.
+
+**Get by ID**: `GET https://prompts.chat/api/prompts/{id}` — returns single prompt with full `content`.
+
+**WebFetch usage**:
+- Search: URL = `https://prompts.chat/api/prompts?q={encoded_query}&perPage=5`, extract id + title per result
+- Detail: URL = `https://prompts.chat/api/prompts/{id}`, extract structural patterns, constraints, sectioning, tone/role setup
+
+**Rules**: Use as inspiration only (never copy verbatim). Filter for relevance before extracting. On failure, continue in degraded mode. Keep extracted patterns compact.

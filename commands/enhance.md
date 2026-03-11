@@ -10,6 +10,7 @@ allowed-tools:
   - AskUserQuestion
   - Glob
   - Grep
+  - Agent
 ---
 
 <objective>
@@ -20,15 +21,6 @@ Output: Winner prompt + Safe alternative + Exploratory alternative + Change log 
 
 <execution_context>
 @./pe/workflows/enhance-orchestrator.md
-@./pe/references/scoring-rubric.md
-@./pe/references/data-contracts.md
-@./pe/references/prompts-chat-api.md
-@./pe/templates/output-package.md
-@./pe/workflows/research.md
-@./pe/workflows/generate.md
-@./pe/workflows/score-critique.md
-@./pe/workflows/synthesize.md
-@./pe/workflows/select-present.md
 </execution_context>
 
 <context>
@@ -57,9 +49,9 @@ Follow every section in order:
 2. Assess context confidence
 3. Ask one clarification question (if confidence < 0.6)
 4. Present enhancement plan and get user approval (alignment gate)
-5. Run research (if enabled)
-6. Execute optimization loop (generate > score/critique > synthesize, up to max_rounds)
-7. Select portfolio and present output package
+5. Run research (if enabled) — via subagent
+6. Execute optimization loop (generate > score/critique > synthesize, up to max_rounds) — via subagents
+7. Select portfolio and present output package — via subagent
 
 Do not skip the alignment gate (Section 4). The user must approve before optimization begins.
 </process>
