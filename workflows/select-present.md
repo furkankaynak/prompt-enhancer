@@ -9,6 +9,7 @@ Output templates are included at the bottom of this file.
 - Final scoreboard (all candidates scored and ranked)
 - All survivors with full text
 - Lock contract
+- Anatomy contract (elements_present/missing from original prompt)
 - Change log entries accumulated across rounds
 - Output format (full/diff/annotated)
 - Original user prompt
@@ -52,14 +53,29 @@ Order by impact (most significant changes first). Aim for 3-8 entries. Avoid tri
 
 Create a compact scoring table showing the portfolio candidates:
 
-| Candidate | Strategy | Eval Score | Rubric Score | Total | Rank |
-|-----------|----------|------------|-------------|-------|------|
-| Winner | {strategy} | {score} | {score} | {score} | {rank} |
-| Alt A | {strategy} | {score} | {score} | {score} | {rank} |
-| Alt B | {strategy} | {score} | {score} | {score} | {rank} |
-| Original | reference anchor | {score} | {score} | {score} | {rank} |
+| Candidate | Strategy | Eval | Rubric | Anatomy | Total | Rank |
+|-----------|----------|------|--------|---------|-------|------|
+| Winner | {strategy} | {score} | {score} | {score} | {score} | {rank} |
+| Alt A | {strategy} | {score} | {score} | {score} | {score} | {rank} |
+| Alt B | {strategy} | {score} | {score} | {score} | {score} | {rank} |
+| Original | reference anchor | {score} | {score} | {score} | {score} | {rank} |
 
 Always include the original prompt's scores for comparison.
+
+## Step 3b: Build Anatomy Improvements Summary
+
+Using `anatomy_contract.elements_present` (original baseline) and the winner's anatomy score breakdown:
+
+- **Original elements present**: elements_present from anatomy_contract
+- **Winner elements present**: all anatomy elements scoring >= 0.5 in the winner's anatomy score breakdown
+- **Net additions**: elements newly reaching >= 0.5 in winner that were absent (0.0) in the original
+
+Format:
+```
+## Anatomy Improvements
+- Original: {comma-separated elements_present, or "none"}
+- Winner added: {comma-separated net additions, or "no new elements"}
+```
 
 ## Step 4: Format Output
 
@@ -139,13 +155,18 @@ Results are based on {what was available: internal generation only / partial res
 |--------|-----------|-------|
 | {description of change} | {why this improvement was made} | {which round} |
 
+## Anatomy Improvements
+- Original: {comma-separated elements_present from anatomy_contract, or "none"}
+- Winner added: {comma-separated net additions, or "no new elements"}
+
 ## Scoring Summary
 
-| Candidate | Strategy | Eval | Rubric | Total | Rank |
-|-----------|----------|------|--------|-------|------|
-| Winner | {strategy} | {eval_score} | {rubric_score} | {total} | 1 |
-| Alt A | {strategy} | {eval_score} | {rubric_score} | {total} | {rank} |
-| Alt B | {strategy} | {eval_score} | {rubric_score} | {total} | {rank} |
+| Candidate | Strategy | Eval | Rubric | Anatomy | Total | Rank |
+|-----------|----------|------|--------|---------|-------|------|
+| Winner | {strategy} | {eval_score} | {rubric_score} | {anatomy_score} | {total} | 1 |
+| Alt A | {strategy} | {eval_score} | {rubric_score} | {anatomy_score} | {total} | {rank} |
+| Alt B | {strategy} | {eval_score} | {rubric_score} | {anatomy_score} | {total} | {rank} |
+| Original | reference anchor | {eval_score} | {rubric_score} | {anatomy_score} | {total} | {rank} |
 
 ## Run Metadata
 - Rounds completed: {n} ({converged|completed|stopped})

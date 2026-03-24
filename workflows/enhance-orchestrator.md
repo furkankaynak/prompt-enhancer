@@ -10,7 +10,7 @@ Parse → Confidence Check → [Clarify] → Alignment Gate → [Research] → O
 
 ## Data Contracts
 
-Full schemas in `references/data-contracts.md`. Key shapes: LockContract (goal, must_haves, forbidden_changes, success_criteria), RoundContext (round, survivors, tombstones, originalPrompt, lockContract), Candidate (id, text, strategyLabel, isOriginal), ScoreBreakdown (evalSetScore, rubricScore, totalScore = 0.5*eval + 0.5*rubric).
+Full schemas in `references/data-contracts.md`. Key shapes: LockContract (goal, must_haves, forbidden_changes, success_criteria), AnatomyContract (elements_present, elements_missing, priority_gaps, domain, agentic_prompt), RoundContext (round, survivors, tombstones, originalPrompt, lockContract, anatomyContract), Candidate (id, text, strategyLabel, isOriginal), ScoreBreakdown (evalSetScore, rubricScore, anatomyScore, totalScore = 0.40*eval + 0.35*rubric + 0.25*anatomy).
 
 ## Fallback Policy
 
@@ -117,12 +117,26 @@ From the prompt (and any clarification answer), extract:
 - **Forbidden changes**: Things the user explicitly or implicitly requires that must not be dropped
 - **Success criteria**: How to judge if the enhanced prompt is successful
 
+### Build the Anatomy Contract
+
+After the LockContract is assembled, perform anatomy analysis on the original prompt against the 10-element checklist from `references/data-contracts.md`.
+
+For each element:
+- Mark PRESENT if clearly or partially present (implied role counts; vague format hint counts as partial)
+- Mark MISSING if absent
+
+Determine `agentic_prompt`: true if the prompt describes multi-step autonomous tasks, tool use, or file system operations.
+
+Select `priority_gaps` — the top 3 highest-impact missing elements using the domain priority order from `references/data-contracts.md`. If `agentic_prompt=true`, `agentic_action_guidance` always enters top 3 if missing.
+
+Record: `AnatomyContract { elements_present, elements_missing, priority_gaps[3], domain, agentic_prompt }`
+
 ### Auto Mode Path (auto_mode=true)
 
-Auto-build the lock contract from the prompt without user interaction. Display a brief confirmation:
+Auto-build both contracts from the prompt without user interaction. Display a brief confirmation:
 
 ```
-Auto mode: enhancing prompt as "{domain}" domain. Starting optimization...
+Auto mode: enhancing "{domain}" prompt (anatomy gaps: {gap_count}). Starting optimization...
 ```
 
 Proceed directly to Section 5. No approval needed.
@@ -141,10 +155,15 @@ Display to the user:
 
 **Must-haves**: {bulleted list of constraints}
 
+**Anatomy Analysis** ({gap_count} gaps found):
+- Present: {comma-separated present elements, or "none"}
+- Missing: {comma-separated missing elements, or "none"}
+- Priority improvements: {priority_gaps[0]}, {priority_gaps[1]}, {priority_gaps[2]}
+
 **Enhancement strategies**:
 1. Faithful rewrite — improve clarity while preserving structure
 2. Structural rework — reorganize into sections with explicit requirements
-3. Creative restructuring — different framing approach for better results
+3. Anatomy-complete — fills all identified best-practice gaps ({priority_gaps[0]}, {priority_gaps[1]}, {priority_gaps[2]})
 
 **Settings**:
 - Research: {enabled|disabled}
@@ -161,7 +180,7 @@ Use `AskUserQuestion` with options:
 - "Change domain"
 - "Add constraints"
 
-If the user changes the domain, re-classify and update eval scenarios/rubric dimensions accordingly. If they adjust settings or add constraints, update the lock contract and settings accordingly, then re-present the plan. If they approve, proceed to Section 5.
+If the user changes the domain, re-classify, re-run anatomy priority ordering, and update AnatomyContract accordingly. If they adjust settings or add constraints, update the lock contract and settings accordingly, then re-present the plan. If they approve, proceed to Section 5.
 
 ---
 
@@ -185,11 +204,11 @@ Execute up to `max_rounds` rounds of generate → score/critique → synthesize.
 
 ### Round 0: Initial Generation
 
-**Dispatch** `contextify-generator`: inputs prompt, domain, strictness, research_brief (or "none"), round=0, learning_preferences (or "none") → returns 4 candidates (c1, c2, c3, c-original)
+**Dispatch** `contextify-generator`: inputs prompt, domain, strictness, research_brief (or "none"), round=0, learning_preferences (or "none"), anatomy_contract → returns 4 candidates (c1, c2, c3-anatomy-complete, c-original)
 
 Brief status: > "Generated 4 initial candidates. Scoring..."
 
-**Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, round=0 → returns scoreboard, survivors, tombstones, critique notes, converged=false
+**Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, anatomy_contract, round=0 → returns scoreboard, survivors, tombstones, critique notes, converged=false
 
 Record the initial scoreboard and critique notes. Display all scores to 2 decimal places.
 
@@ -197,9 +216,9 @@ Record the initial scoreboard and critique notes. Display all scores to 2 decima
 
 For each round:
 
-**1. Dispatch** `contextify-synthesizer`: inputs survivors (with scores and critique), tombstones, prompt, round, strictness, lock_contract → returns crossover + mutations + original anchor
+**1. Dispatch** `contextify-synthesizer`: inputs survivors (with scores and critique), tombstones, prompt, round, strictness, lock_contract, anatomy_contract → returns crossover + mutations + anatomy mutation + original anchor
 
-**2. Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, round, previous_top_score → returns scoreboard, survivors, tombstones, critique notes, convergence_delta, converged
+**2. Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, anatomy_contract, round, previous_top_score → returns scoreboard, survivors, tombstones, critique notes, convergence_delta, converged
 
 **3. Convergence check** (round >= 2 only): if converged (improvement < 0.01), stop early with reason "score plateau"
 
@@ -215,7 +234,7 @@ Record: total rounds completed, whether convergence occurred (and reason), final
 
 ## Section 7: Final Output
 
-**Dispatch** `contextify-presenter`: inputs scoreboard, survivors (with full text), lock_contract, change_log, output_format, prompt, run_metadata (rounds, convergence, research status, strictness, domain) → returns complete formatted output package
+**Dispatch** `contextify-presenter`: inputs scoreboard, survivors (with full text), lock_contract, anatomy_contract, change_log, output_format, prompt, run_metadata (rounds, convergence, research status, strictness, domain) → returns complete formatted output package
 
 Display the returned output package to the user verbatim.
 
@@ -254,7 +273,7 @@ If the user picks "Skip", still record the run with `userPick: "none"`.
 ## Context Management
 
 To prevent context rot across rounds:
-- Carry forward only: survivors (text + score + rationale), tombstones (id + reason), original prompt, lock contract
+- Carry forward only: survivors (text + score + rationale), tombstones (id + reason), original prompt, lock contract, anatomy contract
 - Do NOT carry raw research content, full critique history, or eliminated candidate texts into later rounds
 - Each round starts with the compact round context, not the full history
 - Subagents have self-contained instructions — main thread stays lean

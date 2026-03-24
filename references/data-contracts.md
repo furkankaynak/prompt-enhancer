@@ -28,6 +28,55 @@ Immutable intent and constraints established at the alignment gate. Checked ever
 | forbidden_changes | string[] | Guards that must not be dropped between rounds |
 | success_criteria | string[] | Outcome requirements defining acceptable completion |
 
+## AnatomyContract
+
+Immutable structural analysis built at the alignment gate. Identifies which Anthropic best-practice elements are present or missing in the original prompt. Flows through RoundContext to every agent.
+
+**10-element anatomy checklist:**
+
+| Element ID | Element Name | Description |
+|------------|--------------|-------------|
+| `role` | Role assignment | A clear persona or role given to Claude |
+| `context_why` | Context / Why | Explanation of why the task matters or how the output will be used |
+| `xml_structure` | XML structure | Semantic XML tags (`<instructions>`, `<context>`, `<input>`, etc.) |
+| `output_format` | Output format spec | Explicit format, length, or structure specification for the response |
+| `positive_instructions` | Positive instructions | Instructions stated as what to do, not what not to do |
+| `examples` | Examples | `<example>` blocks or inline examples |
+| `success_criteria` | Success criteria | Explicit conditions defining a correct/complete output |
+| `self_check` | Self-check instruction | Instruction to verify/review before answering |
+| `long_context_order` | Long context ordering | Data placed above query (relevant only when prompt includes longform input) |
+| `agentic_action_guidance` | Agentic action guidance | Explicit act vs confirm boundary (relevant only for agentic prompts) |
+
+**Scoring calibrations** (used by scorer's anatomyScore):
+- 1.0 = element clearly and explicitly present
+- 0.5 = element partially present (implied but not explicit; vague)
+- 0.0 = element absent
+
+| Field | Type | Description |
+|-------|------|-------------|
+| elements_present | string[] | Anatomy element IDs found in the original prompt |
+| elements_missing | string[] | Anatomy element IDs absent from the original prompt |
+| priority_gaps | string[] (max 3) | Top 3 highest-impact missing elements for this domain |
+| domain | string | Domain this analysis was computed for |
+| agentic_prompt | boolean | Whether the prompt appears to be for an agentic/multi-step task |
+
+**Priority order by domain** (highest to lowest):
+- coding: `output_format > xml_structure > role > success_criteria > examples > positive_instructions > context_why > self_check > long_context_order`
+- writing: `role > context_why > output_format > examples > success_criteria > xml_structure > positive_instructions > self_check > long_context_order`
+- data: `output_format > xml_structure > success_criteria > examples > role > long_context_order > context_why > positive_instructions`
+- general: `context_why > role > output_format > success_criteria > examples > xml_structure > positive_instructions > self_check > long_context_order`
+- For agentic prompts (any domain): `agentic_action_guidance` always enters top 3 if missing
+
+## AnatomyGapReport
+
+Lightweight derivation for display in the alignment gate. Not stored in RoundContext.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| gap_count | integer | How many elements are missing |
+| present_summary | string | One-line summary of present elements |
+| missing_summary | string | One-line summary of missing elements |
+
 ## Candidate
 
 A single prompt variant in the optimization pool.
@@ -57,7 +106,8 @@ Hybrid B score for a single candidate. All scores normalized to [0, 1].
 |-------|------|-------------|
 | evalSetScore | number 0-1 | Behavioral score from eval-set scenarios |
 | rubricScore | number 0-1 | Quality score from rubric dimension judging |
-| totalScore | number 0-1 | Weighted average (default 50/50) |
+| anatomyScore | number 0-1 | Best-practice structure adherence score (10-element checklist) |
+| totalScore | number 0-1 | Weighted composite: `0.40 * evalSetScore + 0.35 * rubricScore + 0.25 * anatomyScore` |
 
 ## ScoredCandidate
 
@@ -110,6 +160,7 @@ Compact carry-forward between rounds. This IS the compaction discipline — only
 | tombstones | Tombstone[] | All eliminated candidates so far |
 | originalPrompt | string | Re-injected each round |
 | lockContract | LockContract | Re-injected each round |
+| anatomyContract | AnatomyContract | Re-injected each round — immutable once built at alignment gate |
 
 ## RunHistoryEntry
 

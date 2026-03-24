@@ -8,6 +8,7 @@ Evaluate all candidates using Hybrid B scoring, then critique the top performers
 - Original user prompt
 - Detected domain
 - Lock contract (goal, must_haves, forbidden_changes, success_criteria)
+- Anatomy contract (elements_present, elements_missing, priority_gaps, domain, agentic_prompt)
 
 ## Step 1: Generate Eval Scenarios
 
@@ -21,9 +22,22 @@ For each eval scenario (weighted): score 0.0 = definitely not, 0.5 = partially, 
 ### Rubric Score (0-1)
 For each rubric dimension (weighted, domain-specific): evaluate prompt text quality using 1.0/0.5/0.0 calibrations below. Compute weighted sum.
 
+### Anatomy Score (0-1)
+
+Score each candidate against the 10-element anatomy checklist. For each element:
+- 1.0 = element clearly and explicitly present
+- 0.5 = element partially present (implied but not explicit; mentioned but vague)
+- 0.0 = element absent
+
+Skip `long_context_order` if the prompt contains no longform inline data. Skip `agentic_action_guidance` if `anatomy_contract.agentic_prompt = false`. For skipped elements, exclude their weight from the denominator.
+
+Compute: `anatomyScore = weighted_sum(element_scores) / sum(applicable_weights)`
+
+Use domain-specific anatomy weights from the tables at the bottom of this file.
+
 ### Total Score
 ```
-totalScore = 0.5 * evalSetScore + 0.5 * rubricScore
+totalScore = 0.40 * evalSetScore + 0.35 * rubricScore + 0.25 * anatomyScore
 ```
 Round all scores to 2 decimal places.
 
@@ -33,8 +47,8 @@ Sort by totalScore descending. Dense ranks (ties get same rank).
 
 ```
 Round: {round_number}
-| Rank | ID | Strategy | Eval | Rubric | Total |
-|------|----|----------|------|--------|-------|
+| Rank | ID | Strategy | Eval | Rubric | Anatomy | Total |
+|------|----|----------|------|--------|---------|-------|
 ```
 
 ## Step 4: Intent Lock Check
@@ -70,13 +84,74 @@ For top 2-3 survivors (excluding original anchor):
 ### Critique: {candidateId} ({strategyLabel})
 - Strengths: {point 1}; {point 2}
 - Weaknesses: {point 1}; {point 2}
-- Suggested improvement: {specific actionable change}
+- Anatomy gaps remaining: {list element IDs still at 0.0 or 0.5 in this candidate, or "none"}
+- Suggested improvement: {specific actionable change — prefer anatomy gap fills if gap count >= 2}
 ```
 
 ## Convergence Signal
 
 At round >= 2: compare top score to previous round. If improvement < 0.01 (1%), signal convergence.
 Report: `convergence_delta: {delta}`, `converged: {true|false}`
+
+---
+
+## Anatomy Weights by Domain
+
+### Coding
+| Element ID | Weight |
+|------------|--------|
+| output_format | 0.20 |
+| role | 0.15 |
+| xml_structure | 0.15 |
+| success_criteria | 0.15 |
+| examples | 0.15 |
+| positive_instructions | 0.10 |
+| context_why | 0.05 |
+| self_check | 0.05 |
+| long_context_order | 0.05 (skip if no longform data) |
+| agentic_action_guidance | 0.05 (skip if not agentic) |
+
+### Writing
+| Element ID | Weight |
+|------------|--------|
+| role | 0.20 |
+| context_why | 0.20 |
+| output_format | 0.20 |
+| examples | 0.15 |
+| success_criteria | 0.10 |
+| xml_structure | 0.05 |
+| positive_instructions | 0.05 |
+| self_check | 0.05 |
+| long_context_order | 0.05 (skip if no longform data) |
+| agentic_action_guidance | 0.00 (not applicable) |
+
+### Data
+| Element ID | Weight |
+|------------|--------|
+| output_format | 0.25 |
+| xml_structure | 0.20 |
+| success_criteria | 0.20 |
+| examples | 0.15 |
+| role | 0.10 |
+| long_context_order | 0.10 (skip if no longform data) |
+| context_why | 0.05 |
+| positive_instructions | 0.05 |
+| self_check | 0.00 (not applicable) |
+| agentic_action_guidance | 0.00 (not applicable) |
+
+### General
+| Element ID | Weight |
+|------------|--------|
+| context_why | 0.20 |
+| output_format | 0.20 |
+| role | 0.15 |
+| success_criteria | 0.15 |
+| xml_structure | 0.10 |
+| examples | 0.10 |
+| positive_instructions | 0.05 |
+| self_check | 0.05 |
+| long_context_order | 0.05 (skip if no longform data) |
+| agentic_action_guidance | 0.05 (skip if not agentic) |
 
 ---
 
