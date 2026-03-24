@@ -179,6 +179,7 @@ A single run record for cross-run learning. Stored in `.contextify/history.json`
 | topScore | number 0-1 | Highest score in final round |
 | originalScore | number 0-1 | Original prompt's score in final round |
 | autoMode | boolean | Whether --auto was used |
+| outputPath | string | Path to the saved output file (e.g., `.contextify/outputs/run_2026-03-24T15-30-00Z__coding.md`) |
 
 ## LearningPreferences
 

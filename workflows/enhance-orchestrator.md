@@ -234,9 +234,10 @@ Record: total rounds completed, whether convergence occurred (and reason), final
 
 ## Section 7: Final Output
 
-**Dispatch** `contextify-presenter`: inputs scoreboard, survivors (with full text), lock_contract, anatomy_contract, change_log, output_format, prompt, run_metadata (rounds, convergence, research status, strictness, domain) → returns complete formatted output package
+**Dispatch** `contextify-presenter`: inputs scoreboard, survivors (with full text), lock_contract, anatomy_contract, change_log, output_format, prompt, run_metadata (rounds, convergence, research status, strictness, domain) → returns complete formatted output package (including `outputPath`)
 
-Display the returned output package to the user verbatim.
+Display the returned output package to the user verbatim, then append:
+> Saved to: {outputPath}
 
 ---
 
@@ -251,7 +252,7 @@ Use `AskUserQuestion` with options:
 - "Original (no enhancement needed)"
 - "Skip (deciding later)"
 
-**Dispatch** `contextify-learner`: inputs domain, originalPrompt (first 200 chars), winnerStrategy, userPick (winner|altA|altB|original|none), strictness, rounds, topScore, originalScore, auto_mode, history_path=.contextify/history.json → writes .contextify/history.json
+**Dispatch** `contextify-learner`: inputs domain, originalPrompt (first 200 chars), winnerStrategy, userPick (winner|altA|altB|original|none), strictness, rounds, topScore, originalScore, auto_mode, outputPath, history_path=.contextify/history.json → writes .contextify/history.json
 
 If the user picks "Skip", still record the run with `userPick: "none"`.
 

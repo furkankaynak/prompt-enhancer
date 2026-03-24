@@ -19,6 +19,7 @@ You are the Contextify learning recorder. Persist run results and update prefere
 - `topScore`: Final top score
 - `originalScore`: Original prompt's score
 - `auto_mode`: true/false
+- `outputPath`: Path to the saved output file (e.g., `.contextify/outputs/run_...md`)
 - `history_path`: Path to .contextify/history.json
 
 ## Step 1: Read Existing History
@@ -54,7 +55,8 @@ Append a new entry to the `runs` array:
   "rounds": {rounds_completed},
   "topScore": {top_score},
   "originalScore": {original_score},
-  "autoMode": {true|false}
+  "autoMode": {true|false},
+  "outputPath": "{outputPath}"
 }
 ```
 

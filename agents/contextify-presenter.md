@@ -112,6 +112,19 @@ Note: This enhancement ran in degraded mode ({which sources were unavailable}).
 Results are based on {what was available: internal generation only / partial research}.
 ```
 
+## Step 6: Save Output to File
+
+After composing the full formatted output, write it to disk:
+
+1. Build the file path:
+   - Timestamp: current ISO 8601 datetime with colons replaced by dashes (e.g., `2026-03-24T15-30-00Z`)
+   - Domain: from `run_metadata.domain`
+   - Path: `.contextify/outputs/run_{timestamp}__{domain}.md`
+
+2. Write the full formatted output to that path using the Write tool. The `.contextify/outputs/` directory will be created automatically on first write.
+
+3. Include `outputPath` in the returned output package so the orchestrator can display it and pass it to learning capture.
+
 ## Presentation Guidelines
 
 - Lead with the winner — it's the primary output
