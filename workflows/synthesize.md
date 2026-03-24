@@ -1,3 +1,4 @@
+<!-- Source of truth. Content is embedded in agents/contextify-synthesizer.md. Keep in sync. -->
 # Synthesis Workflow
 
 Produce next-round candidates from survivors using crossover and mutation. This is the evolutionary step driving improvement between rounds.

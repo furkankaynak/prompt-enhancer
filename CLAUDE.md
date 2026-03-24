@@ -1,25 +1,25 @@
-# PE — Project Guide for Claude Code
+# Contextify — Project Guide for Claude Code
 
-## What PE Is
+## What Contextify Is
 
-PE (Prompt Enhancer) is a prompt-only, multi-round prompt optimization system. Zero compiled code — all logic is markdown workflow instructions executed by the LLM. Runs as slash commands (`/pe:enhance`, `/pe:settings`) inside AI coding assistants. Takes any prompt, runs iterative optimization (generate → score/critique → synthesize), and outputs a ranked portfolio: winner + safe alternative + exploratory alternative + change log + scoring summary.
+Contextify is a prompt-only, multi-round prompt-to-context transformation system. Zero compiled code — all logic is markdown workflow instructions executed by the LLM. Runs as slash commands (`/contextify:enhance`, `/contextify:settings`) inside AI coding assistants. Takes any prompt, runs iterative optimization (generate → score/critique → synthesize), and outputs a ranked portfolio: winner + safe alternative + exploratory alternative + change log + scoring summary.
 
 ## Folder Structure
 
 ```
-pe/
-├── commands/                        # Entry points — copy to .claude/commands/pe/
-│   ├── enhance.md                   # /pe:enhance — loads orchestrator only + Agent tool
-│   └── settings.md                  # /pe:settings — per-project defaults (.pe/settings.json)
+contextify/
+├── commands/                        # Entry points — copy to .claude/commands/contextify/
+│   ├── enhance.md                   # /contextify:enhance — loads orchestrator only + Agent tool
+│   └── settings.md                  # /contextify:settings — per-project defaults (.contextify/settings.json)
 ├── agents/                          # Named subagents — copy to .claude/agents/
-│   ├── pe-researcher.md             # Data gathering (prompts.chat + web)
-│   ├── pe-research-synth.md         # Research brief synthesis
-│   ├── pe-generator.md              # Candidate generation (learning-biased)
-│   ├── pe-scorer.md                 # Hybrid B scoring + critique
-│   ├── pe-synthesizer.md            # Crossover + mutation from survivors
-│   ├── pe-presenter.md              # Portfolio selection + output formatting
-│   └── pe-learner.md                # Cross-run learning capture
-├── workflows/                       # Stage instructions — source of truth for subagents
+│   ├── contextify-researcher.md     # Data gathering (prompts.chat + web) — self-contained
+│   ├── contextify-research-synth.md # Research brief synthesis — self-contained
+│   ├── contextify-generator.md      # Candidate generation (learning-biased) — self-contained
+│   ├── contextify-scorer.md         # Hybrid B scoring + critique — self-contained
+│   ├── contextify-synthesizer.md    # Crossover + mutation from survivors — self-contained
+│   ├── contextify-presenter.md      # Portfolio selection + output formatting — self-contained
+│   └── contextify-learner.md        # Cross-run learning capture — self-contained
+├── workflows/                       # Stage instructions — source of truth, fallback path, documentation
 │   ├── enhance-orchestrator.md      # Master flow — sections 1-8, compact subagent dispatch
 │   ├── research.md                  # Dual-source research (includes API reference)
 │   ├── generate.md                  # 3 strategy variants + original anchor = 4 candidates (learning-biased)
@@ -37,7 +37,7 @@ pe/
 ## System Workflow
 
 ```
-  /pe:enhance "prompt" ──► Parse Args (+ load .pe/history.json preferences)
+  /contextify:enhance "prompt" ──► Parse Args (+ load .contextify/history.json preferences)
                               │
                     ┌─────────▼──────────┐
                     │ Confidence Check    │ Score 5 dimensions (0-1 each)
@@ -82,16 +82,16 @@ pe/
                     └─────────┬──────────┘
                               │
                     ┌─────────▼──────────┐
-                    │ Learning Capture    │ Ask user pick → update .pe/history.json
+                    │ Learning Capture    │ Ask user pick → update .contextify/history.json
                     │                     │ → update preferred_strategies
                     └─────────────────────┘
 ```
 
 ## How Execution Works
 
-- **Entry**: `/pe:enhance "prompt"` → `commands/enhance.md` loads only the orchestrator via `@` reference
+- **Entry**: `/contextify:enhance "prompt"` → `commands/enhance.md` loads only the orchestrator via `@` reference
 - **Orchestrator is master**: `workflows/enhance-orchestrator.md` controls the entire flow — sections 1-4 run inline, sections 5-8 dispatch named subagents
-- **Named subagents**: 7 subagent definitions in `agents/` (installed to `.claude/agents/`). Each has a pre-configured model, restricted tool access, and a thin system prompt that reads its workflow file at startup. The orchestrator dispatches by name with just inputs — no embedded prompt blocks.
+- **Named subagents**: 7 subagent definitions in `agents/` (installed to `.claude/agents/`). Each has a pre-configured model, restricted tool access, and self-contained instructions embedded directly in its system prompt. The orchestrator dispatches by name with just inputs — no embedded prompt blocks. Workflow files serve as fallback path and documentation (kept in sync via comments).
 - **Model selection**: Generate/Synthesize/Research-gather/Learn use haiku (lightweight). Research-synth/Score/Present use sonnet (analytical depth).
 - **Fallback**: If named subagent unavailable → generic Agent tool with compact inline prompt. If Agent tool unavailable → Read workflow files and execute inline.
 - **Context compaction**: Between rounds, carry forward ONLY the `RoundContext` (survivors + tombstones + original prompt + lock contract)
@@ -129,7 +129,7 @@ Full schemas in `references/data-contracts.md`. Essentials:
 - Present 3 portfolio choices (winner + safe + exploratory) with change log and scoring
 - Keep round carry-forward compact — only `RoundContext` fields survive between rounds
 - Capture user choice after presenting portfolio (Section 8) — feeds cross-run learning
-- Load `.pe/history.json` preferences at parse time and pass to generation for strategy bias
+- Load `.contextify/history.json` preferences at parse time and pass to generation for strategy bias
 - Show detected domain in the alignment gate plan — let user correct if wrong
 
 ## Don't
@@ -142,6 +142,6 @@ Full schemas in `references/data-contracts.md`. Essentials:
 - Don't exceed 3 optimization rounds
 - Don't present lock-violating candidates in the final portfolio
 - Don't modify workflow files during execution — they are the source of truth
-- Don't preload reference files into context — subagents load them on-demand
+- Don't preload reference files into context — subagents have self-contained instructions
 - Don't bypass named subagent dispatch unless subagents are genuinely unavailable (fall back to generic Agent, then inline)
 - Don't store full prompt text in history — only first 200 characters

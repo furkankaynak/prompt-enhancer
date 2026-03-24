@@ -1,26 +1,26 @@
-# PE — Prompt Enhancer
+# Contextify
 
-Multi-round prompt optimization for AI coding assistants. Takes any prompt and produces a ranked output package with winner, safe alternative, exploratory alternative, change log, and scoring rationale.
+Multi-round prompt-to-context transformation for AI coding assistants. Takes any prompt and produces a ranked output package with winner, safe alternative, exploratory alternative, change log, and scoring rationale.
 
 ## Quick Start
 
 ### Claude Code
 
-1. Copy `pe/commands/*.md` into your project's `.claude/commands/pe/` directory
-2. Copy the `pe/` folder into your project root
-3. Run: `/pe:enhance "your prompt here"`
+1. Copy `contextify/commands/*.md` into your project's `.claude/commands/contextify/` directory
+2. Copy the `contextify/` folder into your project root
+3. Run: `/contextify:enhance "your prompt here"`
 
 ### Usage
 
 ```
-/pe:enhance "I want to build a zombie tower defense game with React.js"
-/pe:enhance "Write a REST API for user management" --strictness=high
-/pe:enhance "Explain async/await" --no-research --output=diff
-/pe:enhance "Build a todo app" --auto
-/pe:enhance "Sort an array" --quick
-/pe:settings set --strictness=high --rounds=2
-/pe:settings set --auto=true
-/pe:settings reset-history
+/contextify:enhance "I want to build a zombie tower defense game with React.js"
+/contextify:enhance "Write a REST API for user management" --strictness=high
+/contextify:enhance "Explain async/await" --no-research --output=diff
+/contextify:enhance "Build a todo app" --auto
+/contextify:enhance "Sort an array" --quick
+/contextify:settings set --strictness=high --rounds=2
+/contextify:settings set --auto=true
+/contextify:settings reset-history
 ```
 
 ### Flags
@@ -51,18 +51,18 @@ User Prompt → Confidence Check → [Clarify] → Alignment Gate → [Research]
 ## Architecture
 
 ```
-pe/
-├── commands/           # Command entry points (copy to .claude/commands/pe/)
-│   ├── enhance.md      # /pe:enhance — main enhancement command
-│   └── settings.md     # /pe:settings — project defaults management
+contextify/
+├── commands/           # Command entry points (copy to .claude/commands/contextify/)
+│   ├── enhance.md      # /contextify:enhance — main transformation command
+│   └── settings.md     # /contextify:settings — project defaults management
 ├── agents/             # Named subagents (copy to .claude/agents/)
-│   ├── pe-researcher.md          # Data gathering (prompts.chat + web)
-│   ├── pe-research-synth.md      # Research brief synthesis
-│   ├── pe-generator.md           # Candidate generation
-│   ├── pe-scorer.md              # Hybrid B scoring + critique
-│   ├── pe-synthesizer.md         # Crossover + mutation
-│   ├── pe-presenter.md           # Portfolio selection + output
-│   └── pe-learner.md             # Cross-run learning capture
+│   ├── contextify-researcher.md     # Data gathering (prompts.chat + web)
+│   ├── contextify-research-synth.md # Research brief synthesis
+│   ├── contextify-generator.md      # Candidate generation
+│   ├── contextify-scorer.md         # Hybrid B scoring + critique
+│   ├── contextify-synthesizer.md    # Crossover + mutation
+│   ├── contextify-presenter.md      # Portfolio selection + output
+│   └── contextify-learner.md        # Cross-run learning capture
 ├── workflows/          # Stage instructions — source of truth for subagents
 │   ├── enhance-orchestrator.md   # Core orchestration + compact subagent dispatch
 │   ├── research.md               # Dual-source research (includes API reference)

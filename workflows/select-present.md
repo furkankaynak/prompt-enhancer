@@ -1,3 +1,4 @@
+<!-- Source of truth. Content is embedded in agents/contextify-presenter.md. Keep in sync. -->
 # Selection and Presentation Workflow
 
 Assemble the final output package from the last round's scoreboard. Select the portfolio (winner + safe alt + exploratory alt) and format according to the requested output format.

@@ -113,7 +113,7 @@ Compact carry-forward between rounds. This IS the compaction discipline — only
 
 ## RunHistoryEntry
 
-A single run record for cross-run learning. Stored in `.pe/history.json`.
+A single run record for cross-run learning. Stored in `.contextify/history.json`.
 
 | Field | Type | Description |
 |-------|------|-------------|

@@ -1,3 +1,4 @@
+<!-- Source of truth. Content is embedded in agents/contextify-scorer.md. Keep in sync. -->
 # Score, Critique & Rubric Bundle
 
 Evaluate all candidates using Hybrid B scoring, then critique the top performers to guide synthesis.

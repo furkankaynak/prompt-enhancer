@@ -1,20 +1,20 @@
-# PE Installation Guide
+# Contextify Installation Guide
 
-PE (Prompt Enhancer) is a prompt-only system — all markdown files, no compiled code.
+Contextify is a prompt-only system — all markdown files, no compiled code.
 
 ## Preferred: Script Installation
 
-Run from the PE source directory:
+Run from the Contextify source directory:
 
 ```sh
-chmod +x pe/install.sh
-./pe/install.sh /path/to/your/project
+chmod +x contextify/install.sh
+./contextify/install.sh /path/to/your/project
 ```
 
-If you're already inside the target project and have the PE source elsewhere:
+If you have the Contextify source elsewhere:
 
 ```sh
-/path/to/pe/install.sh .
+/path/to/contextify/install.sh .
 ```
 
 The script is idempotent — safe to run multiple times to update.
@@ -25,21 +25,21 @@ If the script is unavailable, copy files manually:
 
 ### Step 1: Copy command files
 
-Copy all `.md` files from `pe/commands/` to `<project>/.claude/commands/pe/`:
+Copy all `.md` files from `contextify/commands/` to `<project>/.claude/commands/contextify/`:
 
 ```
-pe/commands/enhance.md  →  <project>/.claude/commands/pe/enhance.md
-pe/commands/settings.md →  <project>/.claude/commands/pe/settings.md
+contextify/commands/enhance.md  →  <project>/.claude/commands/contextify/enhance.md
+contextify/commands/settings.md →  <project>/.claude/commands/contextify/settings.md
 ```
 
-### Step 2: Copy PE resources
+### Step 2: Copy Contextify resources
 
-Copy these directories to `<project>/pe/`:
+Copy these directories to `<project>/contextify/`:
 
 ```
-pe/workflows/   →  <project>/pe/workflows/
-pe/references/  →  <project>/pe/references/
-pe/README.md    →  <project>/pe/README.md
+contextify/workflows/   →  <project>/contextify/workflows/
+contextify/references/  →  <project>/contextify/references/
+contextify/README.md    →  <project>/contextify/README.md
 ```
 
 ### Step 3: Do NOT copy
@@ -50,13 +50,13 @@ Skip `install.sh` and `INSTALL.md` — they are not needed in the target project
 
 After installation, confirm the following exist in your project:
 
-- `.claude/commands/pe/enhance.md`
-- `.claude/commands/pe/settings.md`
-- `pe/workflows/` (contains orchestrator, research, generate, score-bundle, synthesize, select-present)
-- `pe/references/` (contains data-contracts)
+- `.claude/commands/contextify/enhance.md`
+- `.claude/commands/contextify/settings.md`
+- `contextify/workflows/` (contains orchestrator, research, generate, score-bundle, synthesize, select-present)
+- `contextify/references/` (contains data-contracts)
 
-Then open Claude Code in the project and run `/pe:enhance` — the command should be available.
+Then open Claude Code in the project and run `/contextify:enhance` — the command should be available.
 
 ## How It Works
 
-The command file in `.claude/commands/pe/enhance.md` references only `@./pe/workflows/enhance-orchestrator.md`. The orchestrator dispatches subagents that Read workflow files on-demand. All paths resolve relative to the project root, which is why the `pe/` directory must sit at the project root.
+The command file in `.claude/commands/contextify/enhance.md` references only `@./contextify/workflows/enhance-orchestrator.md`. The orchestrator dispatches subagents that Read workflow files on-demand. All paths resolve relative to the project root, which is why the `contextify/` directory must sit at the project root.

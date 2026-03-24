@@ -1,14 +1,15 @@
+<!-- Source of truth. Content is embedded in agents/contextify-learner.md. Keep in sync. -->
 # Learning Workflow
 
 Capture user choices across runs and maintain aggregate preferences to bias future optimization.
 
 ## Inputs
 - Run metadata (domain, originalPrompt snippet, winnerStrategy, userPick, strictness, rounds, topScore, originalScore, auto_mode)
-- History file path: `.pe/history.json`
+- History file path: `.contextify/history.json`
 
 ## Step 1: Read Existing History
 
-Read `.pe/history.json` if it exists. If it doesn't exist or is malformed, start with an empty structure:
+Read `.contextify/history.json` if it exists. If it doesn't exist or is malformed, start with an empty structure:
 
 ```json
 {
@@ -89,9 +90,9 @@ Total number of runs recorded.
 
 ## Step 5: Write Updated History
 
-Write the updated structure back to `.pe/history.json`.
+Write the updated structure back to `.contextify/history.json`.
 
-Ensure the `.pe/` directory exists before writing. Create it if missing.
+Ensure the `.contextify/` directory exists before writing. Create it if missing.
 
 ## How Preferences Are Used
 
@@ -104,6 +105,6 @@ The orchestrator passes `learning_preferences` to the generation stage (Section 
 ## Privacy
 
 - Only the first 200 characters of each prompt are stored
-- History is per-project (`.pe/history.json` in project root)
-- User can reset with `/pe:settings reset-history`
+- History is per-project (`.contextify/history.json` in project root)
+- User can reset with `/contextify:settings reset-history`
 - No data leaves the local machine

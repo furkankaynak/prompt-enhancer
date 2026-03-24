@@ -1,3 +1,4 @@
+<!-- Source of truth. Content is embedded in agents/contextify-generator.md. Keep in sync. -->
 # Candidate Generation Workflow
 
 Generate prompt candidate variants for the optimization pool.

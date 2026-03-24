@@ -1,6 +1,6 @@
 # Enhance Orchestrator Workflow
 
-This is the core workflow for `/pe:enhance`. Execute every section in order. Do not skip sections unless explicitly marked as conditional.
+This is the core workflow for `/contextify:enhance`. Execute every section in order. Do not skip sections unless explicitly marked as conditional.
 
 ## Overview
 
@@ -8,41 +8,17 @@ This is the core workflow for `/pe:enhance`. Execute every section in order. Do 
 Parse → Confidence Check → [Clarify] → Alignment Gate → [Research] → Optimization Loop → Present → [Learn]
 ```
 
----
+## Data Contracts
 
-## Inline Schemas
+Full schemas in `references/data-contracts.md`. Key shapes: LockContract (goal, must_haves, forbidden_changes, success_criteria), RoundContext (round, survivors, tombstones, originalPrompt, lockContract), Candidate (id, text, strategyLabel, isOriginal), ScoreBreakdown (evalSetScore, rubricScore, totalScore = 0.5*eval + 0.5*rubric).
 
-These compact schemas define the key contracts used throughout orchestration. Subagents can Read `references/data-contracts.md` for full details.
+## Fallback Policy
 
-### LockContract
-```
-goal: string           — primary objective of the enhancement run
-must_haves: string[]   — constraints every candidate must preserve
-forbidden_changes: string[] — guards that must not be dropped
-success_criteria: string[]  — outcome requirements for acceptable completion
-```
+If a named subagent is unavailable:
+1. Use generic Agent tool with listed inputs, instruct it to Read the corresponding workflow file
+2. If Agent tool unavailable, Read the workflow file and execute inline
 
-### RoundContext (carry-forward between rounds — ONLY these fields travel)
-```
-round: integer >= 0
-survivors: [{candidateId, text, totalScore, rationale (max 200 chars)}]
-tombstones: [{candidateId, reason (max 100 chars)}]
-originalPrompt: string
-lockContract: LockContract
-```
-
-### Candidate
-```
-id: string             — e.g. "c1", "c2", "c-original"
-text: string           — full prompt text
-strategyLabel: string  — human-readable strategy
-isOriginal: boolean    — true only for original anchor
-```
-
-### ScoreBreakdown
-```
-evalSetScore: 0-1, rubricScore: 0-1, totalScore: 0.5*eval + 0.5*rubric
-```
+Workflow paths: `research.md`, `generate.md`, `score-bundle.md`, `synthesize.md`, `select-present.md`, `learning.md`
 
 ---
 
@@ -63,9 +39,9 @@ If the prompt is empty or missing, ask the user:
 
 Wait for response, then continue.
 
-**Load project settings**: Read `.pe/settings.json` if it exists. Project settings fill in any flag not explicitly provided. Command flags > project settings > schema defaults.
+**Load project settings**: Read `.contextify/settings.json` if it exists. Project settings fill in any flag not explicitly provided. Command flags > project settings > schema defaults.
 
-**Load learning preferences**: Read `.pe/history.json` if it exists. Extract `preferences` for use in Section 6 (generation bias).
+**Load learning preferences**: Read `.contextify/history.json` if it exists. Extract `preferences` for use in Section 6 (generation bias).
 
 Record the parsed envelope mentally:
 - `prompt`: the user's prompt text
@@ -194,15 +170,9 @@ If the user changes the domain, re-classify and update eval scenarios/rubric dim
 Brief status update to user:
 > "Researching prompt patterns and domain best practices..."
 
-**Dispatch A** — Use `pe-researcher` subagent:
-- Inputs: prompt={prompt}, domain={domain}
-- Returns: JSON with promptsChatResults, webResults, degradedSources
+**Dispatch A** — `contextify-researcher`: inputs prompt, domain → returns JSON (promptsChatResults, webResults, degradedSources)
 
-**Dispatch B** — Use `pe-research-synth` subagent:
-- Inputs: gathered_data={output from A}, prompt={prompt}, domain={domain}
-- Returns: 500-word research brief
-
-**Fallback**: If named subagent is unavailable, use generic Agent tool with the inputs above and instruct it to Read `./pe/workflows/research.md`. If Agent tool is also unavailable, Read `./pe/workflows/research.md` and execute inline.
+**Dispatch B** — `contextify-research-synth`: inputs gathered_data (from A), prompt, domain → returns 500-word research brief
 
 If `research_mode=false`, skip this section entirely and note:
 > "Research skipped by user request."
@@ -215,61 +185,39 @@ Execute up to `max_rounds` rounds of generate → score/critique → synthesize.
 
 ### Round 0: Initial Generation
 
-**Dispatch Generate** — Use `pe-generator` subagent:
-- Inputs: prompt={prompt}, domain={domain}, strictness={strictness}, research_brief={research_brief or "none"}, round=0, learning_preferences={learning_preferences or "none"}
-- Returns: 4 candidates (c1, c2, c3, c-original)
+**Dispatch** `contextify-generator`: inputs prompt, domain, strictness, research_brief (or "none"), round=0, learning_preferences (or "none") → returns 4 candidates (c1, c2, c3, c-original)
 
-Brief status update:
-> "Generated 4 initial candidates. Scoring..."
+Brief status: > "Generated 4 initial candidates. Scoring..."
 
-**Dispatch Score/Critique** — Use `pe-scorer` subagent:
-- Inputs: candidates={candidates}, prompt={prompt}, domain={domain}, lock_contract={lock_contract}, round=0
-- Returns: scoreboard, survivors, tombstones, critique notes, converged=false
+**Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, round=0 → returns scoreboard, survivors, tombstones, critique notes, converged=false
 
-Record the initial scoreboard and critique notes. Display all scores to 2 decimal places (not 3).
+Record the initial scoreboard and critique notes. Display all scores to 2 decimal places.
 
 ### Rounds 1 to max_rounds: Optimization
 
 For each round:
 
-**1. Dispatch Synthesize** — Use `pe-synthesizer` subagent:
-- Inputs: survivors={survivors with scores and critique}, tombstones={tombstones}, prompt={prompt}, round={round_number}, strictness={strictness}, lock_contract={lock_contract}
-- Returns: crossover + mutations + original anchor
+**1. Dispatch** `contextify-synthesizer`: inputs survivors (with scores and critique), tombstones, prompt, round, strictness, lock_contract → returns crossover + mutations + original anchor
 
-**2. Dispatch Score/Critique** — Use `pe-scorer` subagent:
-- Inputs: candidates={new candidates}, prompt={prompt}, domain={domain}, lock_contract={lock_contract}, round={round_number}, previous_top_score={previous top score}
-- Returns: scoreboard, survivors, tombstones, critique notes, convergence_delta, converged
+**2. Dispatch** `contextify-scorer`: inputs candidates, prompt, domain, lock_contract, round, previous_top_score → returns scoreboard, survivors, tombstones, critique notes, convergence_delta, converged
 
-**3. Convergence check** (round >= 2 only):
-- If converged (improvement < 0.01): stop early with reason "score plateau"
-- Report convergence to user
+**3. Convergence check** (round >= 2 only): if converged (improvement < 0.01), stop early with reason "score plateau"
 
-**4. Status update**:
-> "Round {n}/{max_rounds} complete. Top score: {score}. {survivors_count} candidates advancing."
+**4. Status**: > "Round {n}/{max_rounds} complete. Top score: {score}. {survivors_count} candidates advancing."
 
 **5.** If converged, break out of the loop.
 
-**Fallback**: If named subagents are unavailable, use generic Agent tool with compact inline prompts instructing each to Read its workflow file. If Agent tool is also unavailable, Read workflow files and execute inline.
-
 ### After Loop Completes
 
-Record:
-- Total rounds completed
-- Whether convergence occurred (and reason)
-- Final scoreboard
-- Accumulated change log entries (what changed from original across all rounds)
+Record: total rounds completed, whether convergence occurred (and reason), final scoreboard, accumulated change log entries.
 
 ---
 
 ## Section 7: Final Output
 
-**Dispatch Select/Present** — Use `pe-presenter` subagent:
-- Inputs: scoreboard={final scoreboard}, survivors={all survivors with full text}, lock_contract={lock_contract}, change_log={accumulated changes}, output_format={output_format}, prompt={prompt}, run_metadata={rounds, convergence, research status, strictness, domain}
-- Returns: complete formatted output package
+**Dispatch** `contextify-presenter`: inputs scoreboard, survivors (with full text), lock_contract, change_log, output_format, prompt, run_metadata (rounds, convergence, research status, strictness, domain) → returns complete formatted output package
 
 Display the returned output package to the user verbatim.
-
-**Fallback**: If named subagent is unavailable, use generic Agent tool. If Agent tool is unavailable, Read `./pe/workflows/select-present.md` and execute inline.
 
 ---
 
@@ -284,11 +232,7 @@ Use `AskUserQuestion` with options:
 - "Original (no enhancement needed)"
 - "Skip (deciding later)"
 
-**Dispatch Learning** — Use `pe-learner` subagent:
-- Inputs: domain={domain}, originalPrompt={first 200 chars}, winnerStrategy={strategy}, userPick={winner|altA|altB|original|none}, strictness={strictness}, rounds={rounds_completed}, topScore={top_score}, originalScore={original_score}, auto_mode={auto_mode}, history_path=.pe/history.json
-- Writes: .pe/history.json
-
-**Fallback**: If named subagent is unavailable, use generic Agent tool. If Agent tool is unavailable, Read `./pe/workflows/learning.md` and execute inline.
+**Dispatch** `contextify-learner`: inputs domain, originalPrompt (first 200 chars), winnerStrategy, userPick (winner|altA|altB|original|none), strictness, rounds, topScore, originalScore, auto_mode, history_path=.contextify/history.json → writes .contextify/history.json
 
 If the user picks "Skip", still record the run with `userPick: "none"`.
 
@@ -302,8 +246,8 @@ If the user picks "Skip", still record the run with `userPick: "none"`.
 | All candidates fail lock check in a round | Stop optimization, present best compliant candidate from previous round |
 | Research fails | Continue in degraded mode with note |
 | WebFetch/WebSearch unavailable | Skip research, note degraded mode |
-| Named subagent unavailable | Fall back to generic Agent tool with compact inline prompt |
-| Agent tool unavailable | Read workflow file directly and execute inline (fallback mode) |
+| Named subagent unavailable | Fall back per Fallback Policy above |
+| Agent tool unavailable | Read workflow file directly and execute inline |
 | Only 1 candidate survives all rounds | Present single enhanced prompt + original for comparison |
 | Original prompt scores highest | Still present enhanced alternatives, note that original was strong |
 
@@ -313,4 +257,4 @@ To prevent context rot across rounds:
 - Carry forward only: survivors (text + score + rationale), tombstones (id + reason), original prompt, lock contract
 - Do NOT carry raw research content, full critique history, or eliminated candidate texts into later rounds
 - Each round starts with the compact round context, not the full history
-- Subagents load their own instructions — main thread stays lean
+- Subagents have self-contained instructions — main thread stays lean

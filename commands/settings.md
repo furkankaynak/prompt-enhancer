@@ -1,6 +1,6 @@
 ---
-name: pe:settings
-description: View and update default settings for prompt enhancement runs. Settings persist per-project in .pe/settings.json.
+name: contextify:settings
+description: View and update default settings for Contextify runs. Settings persist per-project in .contextify/settings.json.
 argument-hint: "[view|set|reset|reset-history] [--strictness=low|balanced|high] [--research=true|false] [--rounds=1-3] [--output=full|diff|annotated] [--auto=true|false]"
 allowed-tools:
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
 ---
 
 <objective>
-Manage per-project default settings for /pe:enhance. Settings are stored in .pe/settings.json in the project root and override schema defaults. Command-line flags on /pe:enhance override project settings.
+Manage per-project default settings for /contextify:enhance. Settings are stored in .contextify/settings.json in the project root and override schema defaults. Command-line flags on /contextify:enhance override project settings.
 
 Precedence: command flags > project settings > schema defaults.
 </objective>
@@ -20,8 +20,8 @@ Arguments: $ARGUMENTS
 Subcommands:
 - view (default if no args): Display current effective settings (includes learning stats)
 - set: Update one or more settings
-- reset: Reset all settings to schema defaults (deletes .pe/settings.json)
-- reset-history: Clear cross-run learning history (deletes .pe/history.json)
+- reset: Reset all settings to schema defaults (deletes .contextify/settings.json)
+- reset-history: Clear cross-run learning history (deletes .contextify/history.json)
 
 Schema defaults:
 - research_mode: true
@@ -35,7 +35,7 @@ Schema defaults:
 1. Parse the subcommand from arguments (default: view).
 
 2. For "view":
-   - Read .pe/settings.json if it exists
+   - Read .contextify/settings.json if it exists
    - Display effective settings (merged with schema defaults)
    - Show which values come from project settings vs schema defaults
 
@@ -47,31 +47,31 @@ Schema defaults:
      - rounds must be integer 1-3
      - output must be full|diff|annotated
      - auto must be true|false
-   - Read existing .pe/settings.json (or start from empty)
+   - Read existing .contextify/settings.json (or start from empty)
    - Merge new values
-   - Write updated .pe/settings.json
+   - Write updated .contextify/settings.json
    - Display the updated effective settings
 
 4. For "reset":
    - Ask user to confirm: "Reset all settings to defaults?"
-   - If confirmed, delete .pe/settings.json
+   - If confirmed, delete .contextify/settings.json
    - Display schema defaults
 
 5. For "reset-history":
    - Ask user to confirm: "Clear all learning history? This removes strategy preferences built from your past runs."
-   - If confirmed, delete .pe/history.json
-   - Display: "Learning history cleared. Preferences will rebuild as you use /pe:enhance."
+   - If confirmed, delete .contextify/history.json
+   - Display: "Learning history cleared. Preferences will rebuild as you use /contextify:enhance."
 
-For "view", also display learning stats if `.pe/history.json` exists:
+For "view", also display learning stats if `.contextify/history.json` exists:
    - Total runs
    - Preferred strategies (top 3)
    - Average score lift
    - Typical domain
 
 Example usage:
-- /pe:settings -> show current settings + learning stats
-- /pe:settings set --strictness=high --rounds=2
-- /pe:settings set --auto=true
-- /pe:settings reset
-- /pe:settings reset-history
+- /contextify:settings -> show current settings + learning stats
+- /contextify:settings set --strictness=high --rounds=2
+- /contextify:settings set --auto=true
+- /contextify:settings reset
+- /contextify:settings reset-history
 </process>

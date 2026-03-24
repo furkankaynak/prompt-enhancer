@@ -1,7 +1,7 @@
 #!/bin/sh
-# PE (Prompt Enhancer) Installation Script
-# Copies PE files into a target project so slash commands and workflows work.
-# Usage: ./pe/install.sh [target-directory]
+# Contextify Installation Script
+# Copies Contextify files into a target project so slash commands and workflows work.
+# Usage: ./contextify/install.sh [target-directory]
 
 set -e
 
@@ -13,17 +13,17 @@ TARGET="${1:-.}"
 mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
 
-echo "Installing PE into: $TARGET"
+echo "Installing Contextify into: $TARGET"
 
 # Create target directories
-mkdir -p "$TARGET/.claude/commands/pe"
+mkdir -p "$TARGET/.claude/commands/contextify"
 mkdir -p "$TARGET/.claude/agents"
-mkdir -p "$TARGET/pe/workflows"
-mkdir -p "$TARGET/pe/references"
+mkdir -p "$TARGET/contextify/workflows"
+mkdir -p "$TARGET/contextify/references"
 
-# Copy command files → .claude/commands/pe/
+# Copy command files → .claude/commands/contextify/
 for f in "$SCRIPT_DIR/commands/"*.md; do
-  [ -f "$f" ] && cp "$f" "$TARGET/.claude/commands/pe/"
+  [ -f "$f" ] && cp "$f" "$TARGET/.claude/commands/contextify/"
 done
 
 # Copy agent files → .claude/agents/
@@ -31,24 +31,24 @@ for f in "$SCRIPT_DIR/agents/"*.md; do
   [ -f "$f" ] && cp "$f" "$TARGET/.claude/agents/"
 done
 
-# Copy workflows, references, templates → pe/
+# Copy workflows, references → contextify/
 for f in "$SCRIPT_DIR/workflows/"*.md; do
-  [ -f "$f" ] && cp "$f" "$TARGET/pe/workflows/"
+  [ -f "$f" ] && cp "$f" "$TARGET/contextify/workflows/"
 done
 
 for f in "$SCRIPT_DIR/references/"*.md; do
-  [ -f "$f" ] && cp "$f" "$TARGET/pe/references/"
+  [ -f "$f" ] && cp "$f" "$TARGET/contextify/references/"
 done
 
 # Copy README
-[ -f "$SCRIPT_DIR/README.md" ] && cp "$SCRIPT_DIR/README.md" "$TARGET/pe/README.md"
+[ -f "$SCRIPT_DIR/README.md" ] && cp "$SCRIPT_DIR/README.md" "$TARGET/contextify/README.md"
 
 echo ""
-echo "PE installed successfully!"
+echo "Contextify installed successfully!"
 echo ""
 echo "Installed structure:"
-echo "  $TARGET/.claude/commands/pe/  (slash commands)"
-echo "  $TARGET/.claude/agents/       (named subagents)"
-echo "  $TARGET/pe/                   (workflows, references)"
+echo "  $TARGET/.claude/commands/contextify/  (slash commands)"
+echo "  $TARGET/.claude/agents/               (named subagents)"
+echo "  $TARGET/contextify/                   (workflows, references)"
 echo ""
-echo "Usage: In Claude Code, run /pe:enhance or /pe:settings"
+echo "Usage: In Claude Code, run /contextify:enhance or /contextify:settings"
