@@ -1,62 +1,97 @@
-# Contextify Installation Guide
+# Contextify Installation
 
-Contextify is a prompt-only system — all markdown files, no compiled code.
+## Install via Claude Code (recommended)
 
-## Preferred: Script Installation
-
-Run from the Contextify source directory:
-
-```sh
-chmod +x contextify/install.sh
-./contextify/install.sh /path/to/your/project
-```
-
-If you have the Contextify source elsewhere:
-
-```sh
-/path/to/contextify/install.sh .
-```
-
-The script is idempotent — safe to run multiple times to update.
-
-## Manual Installation
-
-If the script is unavailable, copy files manually:
-
-### Step 1: Copy command files
-
-Copy all `.md` files from `contextify/commands/` to `<project>/.claude/commands/contextify/`:
+Open a **fresh Claude Code session** in your project and paste this prompt:
 
 ```
-contextify/commands/enhance.md  →  <project>/.claude/commands/contextify/enhance.md
-contextify/commands/settings.md →  <project>/.claude/commands/contextify/settings.md
+Fetch and follow instructions from https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/INSTALL.md and install it
 ```
 
-### Step 2: Copy Contextify resources
+Claude will fetch this file and execute the installation steps below automatically.
 
-Copy these directories to `<project>/contextify/`:
+---
 
-```
-contextify/workflows/   →  <project>/contextify/workflows/
-contextify/references/  →  <project>/contextify/references/
-contextify/README.md    →  <project>/contextify/README.md
-```
+## AI Installation Instructions
 
-### Step 3: Do NOT copy
+You are an AI coding assistant. The user has asked you to install Contextify into their project. **Execute every step below now using your tools. Do not describe what you will do — just do it.**
 
-Skip `install.sh` and `INSTALL.md` — they are not needed in the target project.
+For each numbered item: use WebFetch to download the URL, then use Write to save the exact content to the local path shown (relative to the current project root).
+
+**Commands**
+
+1. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/commands/enhance.md`
+   → Write to `.claude/commands/contextify/enhance.md`
+
+2. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/commands/settings.md`
+   → Write to `.claude/commands/contextify/settings.md`
+
+**Agents**
+
+3. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-researcher.md`
+   → Write to `.claude/agents/contextify-researcher.md`
+
+4. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-research-synth.md`
+   → Write to `.claude/agents/contextify-research-synth.md`
+
+5. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-generator.md`
+   → Write to `.claude/agents/contextify-generator.md`
+
+6. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-scorer.md`
+   → Write to `.claude/agents/contextify-scorer.md`
+
+7. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-synthesizer.md`
+   → Write to `.claude/agents/contextify-synthesizer.md`
+
+8. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-presenter.md`
+   → Write to `.claude/agents/contextify-presenter.md`
+
+9. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-learner.md`
+   → Write to `.claude/agents/contextify-learner.md`
+
+**Workflows**
+
+10. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/enhance-orchestrator.md`
+    → Write to `contextify/workflows/enhance-orchestrator.md`
+
+11. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/research.md`
+    → Write to `contextify/workflows/research.md`
+
+12. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/generate.md`
+    → Write to `contextify/workflows/generate.md`
+
+13. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/score-bundle.md`
+    → Write to `contextify/workflows/score-bundle.md`
+
+14. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/synthesize.md`
+    → Write to `contextify/workflows/synthesize.md`
+
+15. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/select-present.md`
+    → Write to `contextify/workflows/select-present.md`
+
+16. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/learning.md`
+    → Write to `contextify/workflows/learning.md`
+
+**References and README**
+
+17. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/references/data-contracts.md`
+    → Write to `contextify/references/data-contracts.md`
+
+18. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/README.md`
+    → Write to `contextify/README.md`
+
+**Done.** Tell the user: "Contextify installed. Run `/contextify:enhance` to get started."
+
+---
 
 ## Verification
 
-After installation, confirm the following exist in your project:
+After installation, confirm these paths exist in the project:
 
 - `.claude/commands/contextify/enhance.md`
 - `.claude/commands/contextify/settings.md`
-- `contextify/workflows/` (contains orchestrator, research, generate, score-bundle, synthesize, select-present)
-- `contextify/references/` (contains data-contracts)
+- `.claude/agents/contextify-*.md` (7 files)
+- `contextify/workflows/` (7 files)
+- `contextify/references/data-contracts.md`
 
-Then open Claude Code in the project and run `/contextify:enhance` — the command should be available.
-
-## How It Works
-
-The command file in `.claude/commands/contextify/enhance.md` references only `@./contextify/workflows/enhance-orchestrator.md`. The orchestrator dispatches subagents that Read workflow files on-demand. All paths resolve relative to the project root, which is why the `contextify/` directory must sit at the project root.
+Then run `/contextify:enhance` in Claude Code — the command should be available.

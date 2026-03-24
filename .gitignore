@@ -4,6 +4,7 @@
 
 # Documentation (local/internal)
 .docs/
+docs
 
 # Editor and IDE
 .vscode/
