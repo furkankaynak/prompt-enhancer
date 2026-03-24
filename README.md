@@ -6,9 +6,13 @@ Multi-round prompt-to-context transformation for AI coding assistants. Takes any
 
 ### Claude Code
 
-1. Copy `contextify/commands/*.md` into your project's `.claude/commands/contextify/` directory
-2. Copy the `contextify/` folder into your project root
-3. Run: `/contextify:enhance "your prompt here"`
+Open a fresh Claude Code session in your project and paste:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/INSTALL.md and install it
+```
+
+Then run: `/contextify:enhance "your prompt here"`
 
 ### Usage
 
@@ -50,29 +54,29 @@ User Prompt → Confidence Check → [Clarify] → Alignment Gate → [Research]
 
 ## Architecture
 
+Installs entirely under `.claude/` — no files added to your project root:
+
 ```
-contextify/
-├── commands/           # Command entry points (copy to .claude/commands/contextify/)
-│   ├── enhance.md      # /contextify:enhance — main transformation command
-│   └── settings.md     # /contextify:settings — project defaults management
-├── agents/             # Named subagents (copy to .claude/agents/)
-│   ├── contextify-researcher.md     # Data gathering (prompts.chat + web)
-│   ├── contextify-research-synth.md # Research brief synthesis
-│   ├── contextify-generator.md      # Candidate generation
-│   ├── contextify-scorer.md         # Hybrid B scoring + critique
-│   ├── contextify-synthesizer.md    # Crossover + mutation
-│   ├── contextify-presenter.md      # Portfolio selection + output
-│   └── contextify-learner.md        # Cross-run learning capture
-├── workflows/          # Stage instructions — source of truth for subagents
-│   ├── enhance-orchestrator.md   # Core orchestration + compact subagent dispatch
-│   ├── research.md               # Dual-source research (includes API reference)
-│   ├── generate.md               # Candidate generation (learning-biased strategies)
-│   ├── score-bundle.md           # Hybrid B scoring + rubric tables (merged)
-│   ├── synthesize.md             # Crossover/mutation for next round
-│   ├── select-present.md         # Portfolio selection + output templates (merged)
-│   └── learning.md               # Cross-run learning (capture + preferences)
-└── references/         # Shared reference — subagents Read on-demand
-    └── data-contracts.md         # Schema shapes for internal artifacts
+.claude/
+├── commands/contextify/
+│   ├── enhance.md        # /contextify:enhance — main transformation command
+│   └── settings.md       # /contextify:settings — project defaults management
+├── agents/
+│   └── contextify-*.md   # 7 named subagents (researcher, generator, scorer, …)
+└── contextify/
+    ├── workflows/         # Stage instructions — source of truth for subagents
+    │   ├── enhance-orchestrator.md
+    │   ├── research.md
+    │   ├── generate.md
+    │   ├── score-bundle.md
+    │   ├── synthesize.md
+    │   ├── select-present.md
+    │   └── learning.md
+    └── references/
+        └── data-contracts.md
+.contextify/               # Runtime data (auto-created, gitignored)
+├── settings.json
+└── history.json
 ```
 
 ## Key Concepts

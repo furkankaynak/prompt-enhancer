@@ -20,7 +20,7 @@ Output: Winner prompt + Safe alternative + Exploratory alternative + Change log 
 </objective>
 
 <execution_context>
-@./contextify/workflows/enhance-orchestrator.md
+@./.claude/contextify/workflows/enhance-orchestrator.md
 </execution_context>
 
 <context>
@@ -49,7 +49,7 @@ Examples:
 </context>
 
 <process>
-Execute the enhance orchestrator workflow from @./contextify/workflows/enhance-orchestrator.md end-to-end.
+Execute the enhance orchestrator workflow from @./.claude/contextify/workflows/enhance-orchestrator.md end-to-end.
 
 Subagent dispatch uses named Contextify subagents (contextify-researcher, contextify-research-synth, contextify-generator, contextify-scorer, contextify-synthesizer, contextify-presenter, contextify-learner) defined in .claude/agents/. If named subagents are unavailable, falls back to generic Agent tool dispatch.
 

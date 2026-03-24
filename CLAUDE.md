@@ -6,32 +6,52 @@ Contextify is a prompt-only, multi-round prompt-to-context transformation system
 
 ## Folder Structure
 
+**Source repo layout** (this repo):
+
 ```
-contextify/
-├── commands/                        # Entry points — copy to .claude/commands/contextify/
-│   ├── enhance.md                   # /contextify:enhance — loads orchestrator only + Agent tool
-│   └── settings.md                  # /contextify:settings — per-project defaults (.contextify/settings.json)
-├── agents/                          # Named subagents — copy to .claude/agents/
-│   ├── contextify-researcher.md     # Data gathering (prompts.chat + web) — self-contained
-│   ├── contextify-research-synth.md # Research brief synthesis — self-contained
-│   ├── contextify-generator.md      # Candidate generation (learning-biased) — self-contained
-│   ├── contextify-scorer.md         # Hybrid B scoring + critique — self-contained
-│   ├── contextify-synthesizer.md    # Crossover + mutation from survivors — self-contained
-│   ├── contextify-presenter.md      # Portfolio selection + output formatting — self-contained
-│   └── contextify-learner.md        # Cross-run learning capture — self-contained
-├── workflows/                       # Stage instructions — source of truth, fallback path, documentation
-│   ├── enhance-orchestrator.md      # Master flow — sections 1-8, compact subagent dispatch
-│   ├── research.md                  # Dual-source research (includes API reference)
-│   ├── generate.md                  # 3 strategy variants + original anchor = 4 candidates (learning-biased)
-│   ├── score-bundle.md              # Scoring + rubric tables (merged)
-│   ├── synthesize.md                # Crossover + mutation from survivors
-│   ├── select-present.md           # Portfolio selection + output templates (merged)
-│   └── learning.md                  # Cross-run learning (capture user picks, update preferences)
-├── references/                      # On-demand — subagents Read when needed
-│   └── data-contracts.md            # Full schema shapes for internal artifacts
-├── .docs/                           # Product docs (PRD.md, PRODUCT-DESIGN.md)
-├── README.md                        # User-facing overview and quick start
-└── install.sh                       # POSIX installer
+commands/                        # Entry points — installed to .claude/commands/contextify/
+├── enhance.md                   # /contextify:enhance — loads orchestrator only + Agent tool
+└── settings.md                  # /contextify:settings — per-project defaults (.contextify/settings.json)
+agents/                          # Named subagents — installed to .claude/agents/
+├── contextify-researcher.md     # Data gathering (prompts.chat + web) — self-contained
+├── contextify-research-synth.md # Research brief synthesis — self-contained
+├── contextify-generator.md      # Candidate generation (learning-biased) — self-contained
+├── contextify-scorer.md         # Hybrid B scoring + critique — self-contained
+├── contextify-synthesizer.md    # Crossover + mutation from survivors — self-contained
+├── contextify-presenter.md      # Portfolio selection + output formatting — self-contained
+└── contextify-learner.md        # Cross-run learning capture — self-contained
+workflows/                       # Stage instructions — installed to .claude/contextify/workflows/
+├── enhance-orchestrator.md      # Master flow — sections 1-8, compact subagent dispatch
+├── research.md                  # Dual-source research (includes API reference)
+├── generate.md                  # 3 strategy variants + original anchor = 4 candidates (learning-biased)
+├── score-bundle.md              # Scoring + rubric tables (merged)
+├── synthesize.md                # Crossover + mutation from survivors
+├── select-present.md            # Portfolio selection + output templates (merged)
+└── learning.md                  # Cross-run learning (capture user picks, update preferences)
+references/                      # On-demand — installed to .claude/contextify/references/
+└── data-contracts.md            # Full schema shapes for internal artifacts
+.docs/                           # Product docs (PRD.md, PRODUCT-DESIGN.md)
+README.md                        # User-facing overview and quick start
+INSTALL.md                       # GitHub-based installation instructions
+```
+
+**Installed layout in user's project** (all under `.claude/` — no pollution of project root):
+
+```
+.claude/
+├── commands/contextify/
+│   ├── enhance.md
+│   └── settings.md
+├── agents/
+│   └── contextify-*.md  (7 files)
+└── contextify/
+    ├── workflows/        (7 files)
+    ├── references/
+    │   └── data-contracts.md
+    └── README.md
+.contextify/              (runtime data — created at first run, gitignored)
+├── settings.json
+└── history.json
 ```
 
 ## System Workflow
@@ -89,8 +109,8 @@ contextify/
 
 ## How Execution Works
 
-- **Entry**: `/contextify:enhance "prompt"` → `commands/enhance.md` loads only the orchestrator via `@` reference
-- **Orchestrator is master**: `workflows/enhance-orchestrator.md` controls the entire flow — sections 1-4 run inline, sections 5-8 dispatch named subagents
+- **Entry**: `/contextify:enhance "prompt"` → `.claude/commands/contextify/enhance.md` loads only the orchestrator via `@` reference
+- **Orchestrator is master**: `.claude/contextify/workflows/enhance-orchestrator.md` controls the entire flow — sections 1-4 run inline, sections 5-8 dispatch named subagents
 - **Named subagents**: 7 subagent definitions in `agents/` (installed to `.claude/agents/`). Each has a pre-configured model, restricted tool access, and self-contained instructions embedded directly in its system prompt. The orchestrator dispatches by name with just inputs — no embedded prompt blocks. Workflow files serve as fallback path and documentation (kept in sync via comments).
 - **Model selection**: Generate/Synthesize/Research-gather/Learn use haiku (lightweight). Research-synth/Score/Present use sonnet (analytical depth).
 - **Fallback**: If named subagent unavailable → generic Agent tool with compact inline prompt. If Agent tool unavailable → Read workflow files and execute inline.

@@ -20,65 +20,65 @@ For each numbered item: use WebFetch to download the URL, then use Write to save
 
 **Commands**
 
-1. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/commands/enhance.md`
+1. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/commands/enhance.md`
    → Write to `.claude/commands/contextify/enhance.md`
 
-2. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/commands/settings.md`
+2. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/commands/settings.md`
    → Write to `.claude/commands/contextify/settings.md`
 
 **Agents**
 
-3. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-researcher.md`
+3. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-researcher.md`
    → Write to `.claude/agents/contextify-researcher.md`
 
-4. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-research-synth.md`
+4. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-research-synth.md`
    → Write to `.claude/agents/contextify-research-synth.md`
 
-5. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-generator.md`
+5. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-generator.md`
    → Write to `.claude/agents/contextify-generator.md`
 
-6. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-scorer.md`
+6. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-scorer.md`
    → Write to `.claude/agents/contextify-scorer.md`
 
-7. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-synthesizer.md`
+7. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-synthesizer.md`
    → Write to `.claude/agents/contextify-synthesizer.md`
 
-8. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-presenter.md`
+8. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-presenter.md`
    → Write to `.claude/agents/contextify-presenter.md`
 
-9. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/agents/contextify-learner.md`
+9. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/agents/contextify-learner.md`
    → Write to `.claude/agents/contextify-learner.md`
 
 **Workflows**
 
-10. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/enhance-orchestrator.md`
-    → Write to `contextify/workflows/enhance-orchestrator.md`
+10. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/enhance-orchestrator.md`
+    → Write to `.claude/contextify/workflows/enhance-orchestrator.md`
 
-11. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/research.md`
-    → Write to `contextify/workflows/research.md`
+11. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/research.md`
+    → Write to `.claude/contextify/workflows/research.md`
 
-12. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/generate.md`
-    → Write to `contextify/workflows/generate.md`
+12. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/generate.md`
+    → Write to `.claude/contextify/workflows/generate.md`
 
-13. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/score-bundle.md`
-    → Write to `contextify/workflows/score-bundle.md`
+13. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/score-bundle.md`
+    → Write to `.claude/contextify/workflows/score-bundle.md`
 
-14. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/synthesize.md`
-    → Write to `contextify/workflows/synthesize.md`
+14. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/synthesize.md`
+    → Write to `.claude/contextify/workflows/synthesize.md`
 
-15. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/select-present.md`
-    → Write to `contextify/workflows/select-present.md`
+15. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/select-present.md`
+    → Write to `.claude/contextify/workflows/select-present.md`
 
-16. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/workflows/learning.md`
-    → Write to `contextify/workflows/learning.md`
+16. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/workflows/learning.md`
+    → Write to `.claude/contextify/workflows/learning.md`
 
 **References and README**
 
-17. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/references/data-contracts.md`
-    → Write to `contextify/references/data-contracts.md`
+17. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/references/data-contracts.md`
+    → Write to `.claude/contextify/references/data-contracts.md`
 
-18. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/contextify/README.md`
-    → Write to `contextify/README.md`
+18. WebFetch `https://raw.githubusercontent.com/furkankaynak/prompt-enhancer/refs/heads/master/README.md`
+    → Write to `.claude/contextify/README.md`
 
 **Done.** Tell the user: "Contextify installed. Run `/contextify:enhance` to get started."
 
@@ -91,7 +91,7 @@ After installation, confirm these paths exist in the project:
 - `.claude/commands/contextify/enhance.md`
 - `.claude/commands/contextify/settings.md`
 - `.claude/agents/contextify-*.md` (7 files)
-- `contextify/workflows/` (7 files)
-- `contextify/references/data-contracts.md`
+- `.claude/contextify/workflows/` (7 files)
+- `.claude/contextify/references/data-contracts.md`
 
 Then run `/contextify:enhance` in Claude Code — the command should be available.
