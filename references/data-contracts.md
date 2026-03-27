@@ -17,6 +17,26 @@ The normalized run request after parsing command arguments.
 | run_id | string | auto-generated | Format: `run_{timestamp}_{random}` |
 | created_at | ISO string | auto-generated | Run start timestamp |
 
+## ClarificationContext
+
+Accumulated context from the interactive clarification phase. Null if clarification was skipped (auto/quick mode).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| answers | ClarificationAnswer[] | Ordered list of Q&A pairs from the clarification phase |
+| enriched_terms | string[] | Key phrases extracted from answers for research query augmentation (technologies, audience descriptors, constraints, scope terms) |
+| question_count | integer 0-3 | How many questions were asked |
+
+## ClarificationAnswer
+
+A single clarification Q&A pair.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| question | string | The question that was asked |
+| answer | string | The user's response (selected option or custom text) |
+| category | string | Question category: `purpose` \| `scope` \| `audience` \| `constraints` \| `quality` \| `widening` |
+
 ## LockContract
 
 Immutable intent and constraints established at the alignment gate. Checked every round.

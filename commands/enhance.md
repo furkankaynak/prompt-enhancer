@@ -56,7 +56,7 @@ Subagent dispatch uses named Contextify subagents (contextify-researcher, contex
 Follow every section in order:
 1. Parse and validate arguments (including --auto and --quick flags)
 2. Assess context confidence
-3. Ask one clarification question (if confidence < 0.6 AND auto_mode=false; if auto_mode=true, only ask if confidence < 0.3)
+3. Interactive clarification: ask 2-3 context-aware questions one at a time (normal mode; auto_mode skips unless confidence < 0.3)
 4. Present enhancement plan and get user approval (alignment gate) — skipped if auto_mode=true
 5. Run research (if enabled) — via contextify-researcher + contextify-research-synth subagents
 6. Execute optimization loop (generate > score/critique > synthesize, up to max_rounds) — via contextify-generator, contextify-scorer, contextify-synthesizer subagents

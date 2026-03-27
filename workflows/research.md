@@ -8,6 +8,7 @@ This stage runs only when `research_mode=true` (default). It produces a compact 
 ## Inputs
 - User prompt text
 - Detected domain (coding/writing/data/general)
+- Clarification context (ClarificationContext object or null) — enriched terms from interactive clarification augment query construction
 
 ## Process
 
@@ -26,6 +27,15 @@ From the user prompt, extract:
 **Build 2 web queries (domain knowledge + use-case focused):**
 - Query 1 (domain knowledge): `"{topic} {purpose} patterns best practices"` — e.g., "react tower defense patterns best practices"
 - Query 2 (use-case context): `"{purpose} {type} requirements considerations"` — e.g., "tower defense game requirements considerations"
+
+### Clarification-Enriched Queries (if clarification context is not null)
+
+Review the `enriched_terms` from clarification. Use them to sharpen query construction:
+- Named technologies or frameworks → incorporate into `{topic}` extraction
+- Audience descriptors → incorporate into use-case web query
+- Scope/quality constraints → add **one** additional web query: `"{constraint_term} {topic} guidelines"`
+
+**Max 3 web queries total.** The additional enriched query replaces the least relevant existing query if needed, or is added as a third.
 
 ### Step 2: prompts.chat Retrieval
 

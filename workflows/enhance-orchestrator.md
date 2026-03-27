@@ -5,12 +5,12 @@ This is the core workflow for `/contextify:enhance`. Execute every section in or
 ## Overview
 
 ```
-Parse → Confidence Check → [Clarify] → Alignment Gate → [Research] → Optimization Loop → Present → [Learn]
+Parse → Confidence Check → Clarify (2-3 Qs) → Alignment Gate → [Research] → Optimization Loop → Present → [Learn]
 ```
 
 ## Data Contracts
 
-Full schemas in `references/data-contracts.md`. Key shapes: LockContract (goal, must_haves, forbidden_changes, success_criteria), AnatomyContract (elements_present, elements_missing, priority_gaps, domain, agentic_prompt), RoundContext (round, survivors, tombstones, originalPrompt, lockContract, anatomyContract), Candidate (id, text, strategyLabel, isOriginal), ScoreBreakdown (evalSetScore, rubricScore, anatomyScore, totalScore = 0.40*eval + 0.35*rubric + 0.25*anatomy).
+Full schemas in `references/data-contracts.md`. Key shapes: ClarificationContext (answers, enriched_terms, question_count), LockContract (goal, must_haves, forbidden_changes, success_criteria), AnatomyContract (elements_present, elements_missing, priority_gaps, domain, agentic_prompt), RoundContext (round, survivors, tombstones, originalPrompt, lockContract, anatomyContract), Candidate (id, text, strategyLabel, isOriginal), ScoreBreakdown (evalSetScore, rubricScore, anatomyScore, totalScore = 0.40*eval + 0.35*rubric + 0.25*anatomy).
 
 ## Fallback Policy
 
@@ -73,37 +73,71 @@ Assess the user's prompt for completeness and clarity. Score these 5 dimensions 
 
 **Domain detection**: Classify the prompt as `coding`, `writing`, `data`, or `general` based on keywords and intent.
 
-Decision:
-- If confidence >= 0.6: proceed to Section 4 (skip clarification)
-- If confidence < 0.6: proceed to Section 3 (clarification)
+Decision: always proceed to Section 3 (clarification determines its own question count based on confidence and mode).
 
 ---
 
-## Section 3: Clarification (Conditional)
+## Section 3: Interactive Clarification
 
-**Skip conditions**:
-- If `auto_mode=true` AND confidence >= 0.3: skip entirely, proceed to Section 4
-- If `auto_mode=true` AND confidence < 0.3: ask ONE question (extremely vague prompt override)
-- If `auto_mode=false` AND confidence >= 0.6: skip entirely, proceed to Section 4
-- If `auto_mode=false` AND confidence < 0.6: ask ONE question
+### Skip Conditions
 
-**Single-question ceiling**: Ask exactly ONE targeted clarification question. Never ask more than one.
+- If `auto_mode=true` AND confidence >= 0.3: skip entirely, set `clarification_context = null`, proceed to Section 4
+- If `auto_mode=true` AND confidence < 0.3: ask **1 question** only (extremely vague prompt override), then proceed to Section 4
 
-Identify the **lowest-scoring dimension** from Section 2. Ask a clarification question targeting that specific gap:
+### Normal Mode: Adaptive Clarification (2-3 questions, one at a time)
 
-| Lowest Dimension | Question Template |
-|------------------|-------------------|
-| Specificity | "Could you be more specific about what you want? For example: {2-3 concrete options based on the prompt}" |
-| Output clarity | "What format should the output be in? For example: {relevant format options for this domain}" |
-| Audience/context | "Who is this for / what's the context? For example: {relevant context options}" |
-| Constraints | "Are there any specific constraints or requirements? For example: {relevant constraints for this domain}" |
-| Success criteria | "How will you know the result is good? What would a successful output look like?" |
+Determine question count based on confidence:
 
-Use `AskUserQuestion` to present the question with 2-4 relevant options plus the ability to type a custom answer.
+| Confidence | Questions | Focus |
+|-----------|-----------|-------|
+| >= 0.8 | 2 | **Widening** — explore what the user didn't mention. The prompt is already clear; surface hidden assumptions and unexplored dimensions. |
+| 0.4 to 0.8 | 3 | **Mixed** — fill the biggest gap first, then widen. Balance gap-filling with exploration. |
+| < 0.4 | 3 | **Gap-filling first** — address the weakest dimensions, then widen once basics are covered. |
 
-After receiving the answer, incorporate it into the working prompt context. Then proceed to Section 4.
+Initialize: `clarification_context = { answers: [], enriched_terms: [], question_count: 0 }`
 
-**Important**: Even if the answer is vague, do NOT ask another question. One question maximum, then move on.
+### Question Generation
+
+Generate each question **dynamically** by analyzing:
+1. The original prompt text
+2. The confidence dimension scores from Section 2 (which dimensions are weak?)
+3. All previous clarification answers (for questions 2 and 3)
+4. The detected domain
+
+**Do NOT use rigid templates.** Use the category table below as guidance for what kind of question to ask, not as a fixed mapping:
+
+| Category | When to use | Example shape |
+|----------|------------|---------------|
+| `purpose` | context_why or success_criteria scored low | "What will you use this for? e.g., [A] production deployment, [B] learning/exploration, [C] prototype" |
+| `scope` | specificity scored low or prompt is broad | "How comprehensive should this be? e.g., [A] minimal viable, [B] production-ready with edge cases, [C] comprehensive with docs" |
+| `audience` | audience/context scored low | "Who will interact with this? e.g., [A] just me, [B] my team, [C] end users / public" |
+| `constraints` | constraints scored low or domain has common tradeoff axes | "What matters more? e.g., [A] simplicity over completeness, [B] completeness over simplicity, [C] balanced" |
+| `quality` | success_criteria scored low | "What does 'good' look like? e.g., [A] correctness above all, [B] readability/maintainability, [C] performance" |
+| `widening` | for high-confidence prompts or after gaps are filled | "Have you considered {aspect the user didn't mention}? e.g., [A] yes include it, [B] out of scope, [C] tell me more" |
+
+### Question Loop
+
+For each question (1 through question_count):
+
+1. **Generate** the question based on prompt + scores + domain + all previous answers. Target the biggest information gap OR (if confidence >= 0.8 or gaps already addressed) the most impactful widening opportunity.
+2. **Present** via `AskUserQuestion` with 2-4 multiple-choice options. Prefer multiple choice when the domain has natural categories; use fewer, broader options when the space is too open.
+3. **Record** the answer: append `{ question, answer, category }` to `clarification_context.answers`.
+4. **Extract enriched terms**: pull key phrases from the answer (named technologies, audience descriptors, scope terms, constraints) and add to `clarification_context.enriched_terms`.
+5. **Next question** must build on all previous answers — never repeat or rephrase a topic the user already addressed.
+
+### Rules
+
+- **One question per turn**. Never bundle multiple questions into one message.
+- **Accept terse answers**. If the user gives a short or vague answer, accept it and move on to the next question. Do not probe the same topic twice.
+- **No over-interrogation**. The goal is to widen understanding, not to exhaust the user. If an answer is comprehensive enough to cover what later questions would ask, reduce remaining question count.
+- **Multiple choice preferred** when the domain offers natural categories. Open-ended is fine when the space is too broad for meaningful options.
+- **Each answer genuinely informs the next question**. Question 2 should feel like a natural follow-up to answer 1, not a disconnected survey item.
+
+### After Clarification Completes
+
+1. Set `clarification_context.question_count` to the number of questions actually asked.
+2. Incorporate all answers into the working prompt context for Section 4 (LockContract and AnatomyContract construction).
+3. Proceed to Section 4.
 
 ---
 
@@ -111,7 +145,7 @@ After receiving the answer, incorporate it into the working prompt context. Then
 
 ### Build the Lock Contract
 
-From the prompt (and any clarification answer), extract:
+From the prompt and all clarification answers (`clarification_context.answers`, if not null), extract:
 - **Goal**: One sentence describing what the user wants to accomplish
 - **Must-haves**: List of constraints that every candidate must preserve (technologies named, specific requirements, etc.)
 - **Forbidden changes**: Things the user explicitly or implicitly requires that must not be dropped
@@ -189,9 +223,11 @@ If the user changes the domain, re-classify, re-run anatomy priority ordering, a
 Brief status update to user:
 > "Researching prompt patterns and domain best practices..."
 
-**Dispatch A** — `contextify-researcher`: inputs prompt, domain → returns JSON (promptsChatResults, webResults, degradedSources)
+**Pre-research enrichment**: If `clarification_context` is not null and has `enriched_terms`, these augment research query construction. The researcher uses enriched terms to build more targeted queries — e.g., if the user clarified "this is for a production microservice with high availability," the researcher incorporates "production microservice" and "high availability" into its topic/purpose extraction and may add one additional web query from these terms.
 
-**Dispatch B** — `contextify-research-synth`: inputs gathered_data (from A), prompt, domain → returns 500-word research brief
+**Dispatch A** — `contextify-researcher`: inputs prompt, domain, clarification_context (or null) → returns JSON (promptsChatResults, webResults, degradedSources)
+
+**Dispatch B** — `contextify-research-synth`: inputs gathered_data (from A), prompt, domain, clarification_context (or null) → returns 500-word research brief
 
 If `research_mode=false`, skip this section entirely and note:
 > "Research skipped by user request."

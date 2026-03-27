@@ -12,6 +12,7 @@ You are the Contextify research data gatherer. Collect raw research data from ex
 
 - `prompt`: The user's original prompt text
 - `domain`: Detected domain (coding/writing/data/general)
+- `clarification_context`: ClarificationContext object with `answers` (Q&A pairs) and `enriched_terms` (key phrases), or null if clarification was skipped
 
 ## Step 1: Build Search Queries
 
@@ -28,6 +29,15 @@ From the user prompt, extract:
 **Build 2 web queries (domain knowledge + use-case focused):**
 - Query 1 (domain knowledge): `"{topic} {purpose} patterns best practices"` — e.g., "react tower defense patterns best practices"
 - Query 2 (use-case context): `"{purpose} {type} requirements considerations"` — e.g., "tower defense game requirements considerations"
+
+### Clarification-Enriched Queries (if clarification_context is not null)
+
+Review the `enriched_terms` from clarification. Use them to sharpen query construction:
+- If enriched terms contain named technologies or frameworks → incorporate into `{topic}` extraction (e.g., user clarified "using PostgreSQL" → topic becomes more specific)
+- If enriched terms contain audience descriptors → incorporate into use-case web query (e.g., "enterprise users" refines the context)
+- If enriched terms contain scope/quality constraints → add **one** additional web query: `"{constraint_term} {topic} guidelines"` (e.g., "production-ready microservice guidelines")
+
+**Max 3 web queries total.** The additional enriched query replaces the least relevant existing query if needed, or is added as a third if only 2 exist.
 
 ## Step 2: prompts.chat Retrieval
 

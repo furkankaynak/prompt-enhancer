@@ -69,10 +69,12 @@ INSTALL.md                       # GitHub-based installation instructions
                               │
               ┌───── --auto? ─┤
               │               │
-         conf < 0.3?    conf < 0.6?
-          YES ──► Ask   YES ──► Ask ONE clarification ──┐
-           NO ──────────►NO ───────────────────────────►│
-                              │◄────────────────────────┘
+         conf < 0.3?    Normal mode:
+          YES ──► Ask 1  conf >= 0.8 ──► Ask 2 Qs (widening) ──┐
+           NO ──────────►conf 0.4-0.8 ► Ask 3 Qs (mixed)  ─────┤
+                         conf < 0.4 ──► Ask 3 Qs (gap-fill) ───┤
+                              │◄────────────────────────────────┘
+                              │ clarification_context → research
                     ┌─────────▼──────────┐
                     │ Alignment Gate      │ Build LockContract
               ┌─────│ --auto: skip gate   │ Normal: present plan + domain confirm
@@ -124,6 +126,7 @@ Full schemas in `references/data-contracts.md`. Essentials:
 
 | Contract | Purpose | Key Fields |
 |----------|---------|------------|
+| **ClarificationContext** | Accumulated Q&A from interactive clarification | answers, enriched_terms, question_count |
 | **LockContract** | Immutable intent — checked every round | goal, must_haves, forbidden_changes, success_criteria |
 | **Candidate** | A single prompt variant | id, text, strategyLabel, isOriginal |
 | **RoundContext** | ALL that travels between rounds | survivors, tombstones, originalPrompt, lockContract |
@@ -141,6 +144,7 @@ Full schemas in `references/data-contracts.md`. Essentials:
 
 - Follow `enhance-orchestrator.md` sections in order — never skip or reorder
 - Always get user approval at the alignment gate (Section 4) before optimization — unless `--auto` or `--quick` is set
+- In normal mode, always run interactive clarification (2-3 questions one at a time, count based on confidence level)
 - In auto mode, still override and ask ONE question if confidence < 0.3 (extremely vague prompt)
 - Re-inject the original prompt as `c-original` every round — it never leaves the pool
 - Check every candidate against the lock contract every round — exclude violators as tombstones
@@ -155,7 +159,8 @@ Full schemas in `references/data-contracts.md`. Essentials:
 ## Don't
 
 - Don't skip the alignment gate in normal mode — user must approve the enhancement plan
-- Don't ask more than ONE clarification question (single-question ceiling)
+- Don't ask more than 3 clarification questions (2 when confidence >= 0.8, 3 otherwise)
+- Don't ask follow-up questions about topics the user already addressed in a previous answer
 - Don't carry raw research content, full critique history, or eliminated candidate texts between rounds
 - Don't copy retrieved research content verbatim — extract patterns only
 - Don't eliminate the original prompt from the candidate pool — it always survives
